@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    GITHUB_TOKEN = credentials('github-token')
+    GITHUB_TOKEN  = credentials('github-token')
     REPO_OWNER    = 'mateusherrera'
     REPO_NAME     = 'flask-llm-api'
   }
