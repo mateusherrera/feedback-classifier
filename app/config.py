@@ -8,11 +8,8 @@ Arquivo que carrega variáveis de ambiente e configurações do aplicativo.
 :updated at:    2025-08-01
 """
 
-from os     import getenv
-from dotenv import load_dotenv
+from os import getenv
 
-
-load_dotenv(override=True)
 
 class Config:
     """ Classe de configuração do aplicativo. """

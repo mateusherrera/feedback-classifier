@@ -8,9 +8,9 @@ Arquivo para definição do modelo de Comntário.
 :updated at:    2025-08-01
 """
 
-from uuid           import uuid4
+from uuid import uuid4
 
-from app.extensions import db
+from extensions import db
 
 
 class Comentario(db.Model):

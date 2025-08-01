@@ -11,9 +11,9 @@ Arquivo para definição de métodos relacionados a comentários.
 from flask          import request
 from flask_restful  import Resource
 
-from app.models.comentario      import Comentario
-from app.extensions             import db
-from app.services.classifier    import (
+from models.comentario      import Comentario
+from extensions             import db
+from services.classifier    import (
     classify_comment,
     classify_batch,
 )
@@ -35,74 +35,79 @@ class ComentariosList(Resource):
     def post(self):
         """ Cria um novo comentário. """
 
-        data = request.get_json(force=True)
+        try:
+            data = request.get_json(force=True)
 
-        # -- Em lote --
-        if isinstance(data, list):
-            textos = list()
-            for item in data:
-                texto = item.get('texto', '').strip()
+            # -- Em lote --
+            if isinstance(data, list):
+                textos = list()
+                for item in data:
+                    texto = item.get('texto', '').strip()
 
-                if not texto:
-                    # 400 - Bad Request
-                    return { 'details': 'Campo texto é obrigatório em todos os itens.' }, 400
+                    if not texto:
+                        # 400 - Bad Request
+                        return { 'details': 'Campo texto é obrigatório em todos os itens.' }, 400
 
-                textos.append(texto)
+                    textos.append(texto)
 
-            # Definindo quantidade de workers para processamento em lote
-            num_comments = len(textos)
-            if num_comments >= self.BATCH_SIZE_THRESHOLD:
-                workers = min(self.MAX_WORKERS, num_comments)
-            else:
-                workers = 1
+                # Definindo quantidade de workers para processamento em lote
+                num_comments = len(textos)
+                if num_comments >= self.BATCH_SIZE_THRESHOLD:
+                    workers = min(self.MAX_WORKERS, num_comments)
+                else:
+                    workers = 1
 
-            # Classifica em lote
-            results = classify_batch(textos, max_workers=workers)
+                # Classifica em lote
+                results = classify_batch(textos, max_workers=workers)
 
-            # Salvando classificações no banco de dados
-            response_list = list()
-            for res in results:
-                comentario = Comentario(
-                    texto=res['texto'],
-                    categoria=res['categoria'],
-                    tags=res.get('tags_funcionalidades', []),
-                    confianca=res['confianca']
-                )
+                # Salvando classificações no banco de dados
+                response_list = list()
+                for res in results:
+                    comentario = Comentario(
+                        texto=res['texto'],
+                        categoria=res['categoria'],
+                        tags=res.get('tags_funcionalidades', []),
+                        confianca=res['confianca']
+                    )
 
-                db.session.add(comentario)
-                response_list.append({
-                    'id'                    : comentario.id,
-                    'categoria'             : comentario.categoria,
-                    'tags_funcionalidades'  : comentario.tags,
-                    'confianca'             : comentario.confianca
-                })
+                    db.session.add(comentario)
+                    response_list.append({
+                        'id'                    : comentario.id,
+                        'categoria'             : comentario.categoria,
+                        'tags_funcionalidades'  : comentario.tags,
+                        'confianca'             : comentario.confianca
+                    })
+
+                # 201 - Created
+                db.session.commit()
+                return response_list, 201
+
+            # -- Comentário único --
+            texto = data.get('texto', '').strip()
+            if not texto:
+                # 400 - Bad Request
+                return { 'details': 'Campo texto é obrigatório.' }, 400
+
+            categoria, tags, confianca = classify_comment(texto)
+            comentario = Comentario(
+                texto=texto,
+                categoria=categoria,
+                tags=tags,
+                confianca=confianca
+            )
+            db.session.add(comentario)
 
             # 201 - Created
             db.session.commit()
-            return response_list, 201
+            return {
+                'id'                    : comentario.id,
+                'categoria'             : comentario.categoria,
+                'tags_funcionalidades'  : comentario.tags,
+                'confianca'             : comentario.confianca
+            }, 201
 
-        # -- Comentário único --
-        texto = data.get('texto', '').strip()
-        if not texto:
-            # 400 - Bad Request
-            return { 'details': 'Campo texto é obrigatório.' }, 400
-
-        categoria, tags, confianca = classify_comment(texto)
-        comentario = Comentario(
-            texto=texto,
-            categoria=categoria,
-            tags=tags,
-            confianca=confianca
-        )
-        db.session.add(comentario)
-
-        # 201 - Created
-        db.session.commit()
-        return {
-            'id'                    : comentario.id,
-            'categoria'             : comentario.categoria,
-            'tags_funcionalidades'  : comentario.tags,
-            'confianca'             : comentario.confianca
-        }, 201
+        except:
+            # 500 - Internal Server Error
+            return { 'details': 'Erro ao processar o comentário.' }, 500
 
     # end: methods
