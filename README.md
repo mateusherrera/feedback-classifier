@@ -18,7 +18,6 @@ O sistema foi construído com foco em paralelismo, autenticação via JWT, inter
 - [Resumo por E-mail](#resumo-por-e-mail)
 - [Extra: Q&A Insights](#extra-qa-insights)
 
-
 ## Ferramentas Utilizadas
 
 | Categoria      | Ferramenta                                                                               |
