@@ -5,11 +5,12 @@ Arquivo para definição de métodos relacionados a comentários.
 :created at:    2025-08-01
 
 :updated by:    Mateus Herrera
-:updated at:    2025-08-01
+:updated at:    2025-08-02
 """
 
-from flask          import request
-from flask_restful  import Resource
+from flask              import request
+from flask_restful      import Resource
+from flask_jwt_extended import jwt_required
 
 from app.models.comentario      import Comentario
 from app.extensions             import db
@@ -19,7 +20,7 @@ from app.services.classifier    import (
 )
 
 
-class ComentariosList(Resource):
+class Comentarios(Resource):
     """ Classe para manipulação de comentários. """
 
     # ini: constants
@@ -32,6 +33,7 @@ class ComentariosList(Resource):
 
     # ini: methods
 
+    @jwt_required()
     def post(self):
         """ Cria um novo comentário. """
 

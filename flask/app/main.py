@@ -5,8 +5,10 @@ Arquivo principal da aplicação Flask.
 :created at:    2025-08-01
 
 :updated by:    Mateus Herrera
-:updated at:    2025-08-01
+:updated at:    2025-08-02
 """
+
+from datetime import timedelta
 
 from flask          import Flask
 from flask_migrate  import Migrate
@@ -29,9 +31,17 @@ def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Secret keys
+    app.config['SECRET_KEY']        = Config.SECRET_KEY
+
+    # Configuração do JWT
+    app.config['JWT_SECRET_KEY']            = Config.JWT_SECRET_KEY
+    app.config['JWT_ACCESS_TOKEN_EXPIRES']  = timedelta(minutes=1)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=1)
+
     # Inicializa as extensões
     db.init_app(app)
-    Migrate(app, db)
+    Migrate(app, db, version_table_schema=Config.PROJECT_SCHEMA)
 
     jwt.init_app(app)
 
