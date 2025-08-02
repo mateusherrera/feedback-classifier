@@ -27,8 +27,9 @@ class Register(Resource):
     def post(self):
         """ Criar novo usuário. """
 
+        data = request.get_json(force=True)
+
         try:
-            data        = request.get_json(force=True)
             username    = data.get('username', '').strip()
             password    = data.get('password', '')
 
@@ -60,8 +61,9 @@ class Login(Resource):
     def post(self):
         """ Login, retorna tokens JWT (access e refresh). """
 
+        data = request.get_json(force=True)
+
         try:
-            data        = request.get_json(force=True)
             username    = data.get('username', '').strip()
             password    = data.get('password', '')
 

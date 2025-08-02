@@ -27,7 +27,7 @@ class Comentarios(Resource):
 
     # Processamento paralelo para lotes grandes
     MAX_WORKERS             = 10
-    BATCH_SIZE_THRESHOLD    = 20
+    BATCH_SIZE_THRESHOLD    = 5
 
     # end: constants
 
@@ -37,19 +37,23 @@ class Comentarios(Resource):
     def post(self):
         """ Cria um novo comentário. """
 
-        try:
-            data = request.get_json(force=True)
+        data = request.get_json(force=True)
 
+        try:
             # -- Em lote --
             if isinstance(data, list):
+                items_data = {}
                 textos = list()
+
                 for item in data:
+                    uuid_comentario = item.get('id', '')
                     texto = item.get('texto', '').strip()
 
-                    if not texto:
+                    if not uuid_comentario or not texto:
                         # 400 - Bad Request
-                        return { 'details': 'Campo texto é obrigatório em todos os itens.' }, 400
+                        return { 'details': 'Campo id e texto são obrigatórios em todos os itens.' }, 400
 
+                    items_data[texto] = uuid_comentario
                     textos.append(texto)
 
                 # Definindo quantidade de workers para processamento em lote
@@ -65,7 +69,9 @@ class Comentarios(Resource):
                 # Salvando classificações no banco de dados
                 response_list = list()
                 for res in results:
+                    uuid_comentario = items_data[res['texto']]
                     comentario = Comentario(
+                        id=uuid_comentario,
                         texto=res['texto'],
                         categoria=res['categoria'],
                         tags=res.get('tags_funcionalidades', []),
@@ -75,6 +81,7 @@ class Comentarios(Resource):
                     db.session.add(comentario)
                     response_list.append({
                         'id'                    : comentario.id,
+                        'texto'                 : comentario.texto,
                         'categoria'             : comentario.categoria,
                         'tags_funcionalidades'  : comentario.tags,
                         'confianca'             : comentario.confianca
@@ -85,13 +92,15 @@ class Comentarios(Resource):
                 return response_list, 201
 
             # -- Comentário único --
+            uuid_comentario = data.get('id', '')
             texto = data.get('texto', '').strip()
-            if not texto:
+            if not uuid_comentario or not texto:
                 # 400 - Bad Request
-                return { 'details': 'Campo texto é obrigatório.' }, 400
+                return { 'details': 'Campo id e texto são obrigatórios.' }, 400
 
             categoria, tags, confianca = classify_comment(texto)
             comentario = Comentario(
+                id=uuid_comentario,
                 texto=texto,
                 categoria=categoria,
                 tags=tags,
@@ -103,12 +112,13 @@ class Comentarios(Resource):
             db.session.commit()
             return {
                 'id'                    : comentario.id,
+                'texto'                 : comentario.texto,
                 'categoria'             : comentario.categoria,
                 'tags_funcionalidades'  : comentario.tags,
                 'confianca'             : comentario.confianca
             }, 201
 
-        except:
+        except Exception as err:
             # 500 - Internal Server Error
             return { 'details': 'Erro ao processar o comentário.' }, 500
 

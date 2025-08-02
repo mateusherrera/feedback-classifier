@@ -23,7 +23,10 @@ blueprint   = Blueprint('api', __name__, url_prefix='/api')
 api         = Api(blueprint)
 
 # Registro de endpoints
-api.add_resource( Comentarios   , '/comentarios'    )
+# Auth
 api.add_resource( Register      , '/auth/register'  )
 api.add_resource( Refresh       , '/auth/refresh'   )
 api.add_resource( Login         , '/auth/login'     )
+
+# Classificador de Comentários
+api.add_resource( Comentarios   , '/comentarios'    )
