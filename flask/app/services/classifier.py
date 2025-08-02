@@ -9,7 +9,7 @@ Arquivo com funções para classificar textos
 :updated at:    2025-08-01
 """
 
-import openai
+from openai import OpenAI
 
 from json               import loads
 from typing             import List, Tuple
@@ -18,8 +18,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.config import Config
 
 
-# Definiar OpenAI API KEY
-openai.api_key = Config.OPENAI_API_KEY
+# Criar cliente OpenAI
+openai = OpenAI(api_key=Config.OPENAI_API_KEY)
 
 CATEGORIES = [
     'ELOGIO',
@@ -30,7 +30,19 @@ CATEGORIES = [
 ]
 
 SYSTEM_PROMPT = (
-    "Desenvolver prompt"
+    "Você é um classificador de comentários. "
+    "Ao receber um texto de comentário, analise-o e retorne apenas um OBJETO JSON VÁLIDO com estes campos:\n"
+    "  1. \"categoria\": uma das categorias exatas: [\"" + "\", \"".join(CATEGORIES) + "\"].\n"
+    "  2. \"tags_funcionalidades\": lista de *tags* no formato código_descricao (ex: feat_autotune, clip_narrativa). "
+    "Liste **todas** as tags relativas à funcionalidade ou problema mencionado. Se nenhuma, retorne uma lista vazia.\n"
+    "  3. \"confianca\": número entre 0.0 e 1.0 refletindo sua estimativa; **não copie valores de exemplo**.\n"
+    "Aqui vão alguns exemplos para calibrar:\n"
+    "User: Texto: “O layout é lindo mas às vezes trava.”\n"
+    "Bot: {\"categoria\":\"CRÍTICA\",\"tags_funcionalidades\":[\"ui_estetica\",\"performance_travamento\"],\"confianca\":0.82}\n"
+    "User: Texto: “Parabéns pelo suporte rápido!”\n"
+    "Bot: {\"categoria\":\"ELOGIO\",\"tags_funcionalidades\":[\"suporte_eficiente\"],\"confianca\":0.95}\n"
+    "---\n"
+    "Agora, classifique este comentário **sem** repetir esses exemplos:\n"
 )
 
 
@@ -48,10 +60,10 @@ def classify_comment(text: str, model: str = 'gpt-3.5-turbo') -> Tuple[str, List
         { 'role': 'user',   'content': f'Texto: {text}' }
     ]
 
-    response = openai.ChatComppetion.create(
+    response = openai.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.0,
+        temperature=0.2,
         max_tokens=150,
     )
 
