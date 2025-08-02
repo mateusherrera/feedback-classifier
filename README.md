@@ -2,7 +2,6 @@
 
 [![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&labelColor=11111b&color=B5E8E0&logoColor=e0e0e0)](https://www.python.org/)
 
-
 Este projeto é uma API RESTful desenvolvida com Flask e integrada à API da OpenAI, com o objetivo de classificar automaticamente feedbacks textuais deixados por usuários da plataforma AluMusic. Ele permite a ingestão segura de comentários, classificação inteligente via LLM, análise de tendências e geração de relatórios semanais.
 
 O sistema foi construído com foco em paralelismo, autenticação via JWT, interface moderna para curadoria e painel público para insights em tempo real. Tudo isso orquestrado com Docker, Gunicorn, NGINX e CI/CD com Jenkins + GitHub Actions.
