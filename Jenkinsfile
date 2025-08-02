@@ -2,21 +2,20 @@ pipeline {
   agent any
 
   environment {
-    REPO_OWNER    = 'mateusherrera'
-    REPO_NAME     = 'feedback-classifier'
-    WORKFLOW_NAME = 'CI - Pytest'
-    BRANCH        = 'main'
+    REPO_OWNER = 'mateusherrera'
+    REPO_NAME  = 'feedback-classifier'
   }
 
   stages {
     stage('Disparar GitHub Actions') {
       steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          echo "Disparando GitHub Actions para ${env.REPO_OWNER}/${env.REPO_NAME}"
           sh '''
             curl -X POST \
               -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches \
+              https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches \
               -d '{"event_type":"ci-pipeline"}'
           '''
         }
@@ -27,65 +26,58 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
           script {
-            echo "Aguardando workflow '${env.WORKFLOW_NAME}' na branch '${env.BRANCH}'..."
+            echo "Aguardando workflow na branch 'main'..."
+            def run_id = ''
+            def max_tries = 30
+            def tries = 0
 
-            def maxRetries = 30
-            def sleepSeconds = 10
-            def workflowRunId = ''
-
-            for (int i = 0; i < maxRetries; i++) {
-              def result = sh(
-                script: '''
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                    https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs?branch=${BRANCH}&event=repository_dispatch | \
-                    jq -r ".workflow_runs[] | select(.name==\\"${WORKFLOW_NAME}\\") | .id" | head -n1
-                ''',
-                returnStdout: true,
-                environment: [ 'GITHUB_TOKEN' : "${GITHUB_TOKEN}" ]
+            while (run_id == '' && tries < max_tries) {
+              sleep time: 10, unit: 'SECONDS'
+              def output = sh(
+                script: """
+                  curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=main
+                """,
+                returnStdout: true
               ).trim()
 
-              if (result) {
-                workflowRunId = result
-                echo "Workflow iniciado. ID: ${workflowRunId}"
-                break
-              }
+              run_id = output.readLines()
+                .findAll { it.contains('"name": "CI - Pytest"') }
+                .withIndex()
+                .find { it[1] + 1 < output.readLines().size() }
+                ?.with { output.readLines()[it[1] + 1] }
+                ?.findAll(/\d+/)?.join('')
 
-              sleep time: sleepSeconds, unit: 'SECONDS'
+              tries++
             }
 
-            if (!workflowRunId) {
-              error "Timeout: workflow '${env.WORKFLOW_NAME}' não foi iniciado."
+            if (!run_id) {
+              error 'Workflow não encontrado ou não iniciado a tempo.'
             }
 
-            def status = ''
+            echo "Workflow ID encontrado: ${run_id}"
+            echo "Aguardando conclusão..."
+
             def conclusion = ''
-            for (int i = 0; i < maxRetries; i++) {
-              def json = sh(
-                script: '''
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                    https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs/${workflowRunId}
-                ''',
-                returnStdout: true,
-                environment: [ 'GITHUB_TOKEN' : "${GITHUB_TOKEN}" ]
+            while (conclusion == '') {
+              sleep time: 10, unit: 'SECONDS'
+              def run_data = sh(
+                script: """
+                  curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id
+                """,
+                returnStdout: true
               ).trim()
 
-              status = sh(script: "echo '${json}' | jq -r '.status'", returnStdout: true).trim()
-              conclusion = sh(script: "echo '${json}' | jq -r '.conclusion'", returnStdout: true).trim()
-
-              echo "Status: ${status}, Conclusion: ${conclusion}"
-
-              if (status == 'completed') {
-                break
-              }
-
-              sleep time: sleepSeconds, unit: 'SECONDS'
+              conclusion = run_data.readLines().find { it.contains('"conclusion"') }?.split(':')?.last()?.replaceAll(/[",]/, '')?.trim()
+              echo "Status atual: ${conclusion ?: 'em execução...'}"
             }
 
             if (conclusion != 'success') {
-              error "GitHub Actions falhou com status: ${conclusion}"
+              error "Workflow falhou com status: ${conclusion}"
+            } else {
+              echo 'Workflow do GitHub Actions finalizado com sucesso!'
             }
-
-            echo "GitHub Actions finalizou com sucesso."
           }
         }
       }
