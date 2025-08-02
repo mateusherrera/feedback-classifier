@@ -26,9 +26,10 @@ services:
     environment:
       FLASK_APP: ${FLASK_APP}
       FLASK_ENV: ${FLASK_ENV}
-      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      JWT_SECRET: ${JWT_SECRET}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
     volumes:
       - ./flask:/flask
     depends_on:
