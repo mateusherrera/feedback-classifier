@@ -120,6 +120,8 @@ class Comentarios(Resource):
 
         except Exception as err:
             # 500 - Internal Server Error
+            from traceback import print_exc
+            print_exc()
             return { 'details': 'Erro ao processar o comentário.' }, 500
 
     # end: methods

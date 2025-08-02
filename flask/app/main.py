@@ -41,7 +41,10 @@ def create_app(config_class=Config) -> Flask:
 
     # Inicializa as extensões
     db.init_app(app)
-    Migrate(app, db, version_table_schema=Config.PROJECT_SCHEMA)
+    if Config.PROJECT_SCHEMA:
+        Migrate(app, db, version_table_schema=Config.PROJECT_SCHEMA)
+    else:
+        Migrate(app, db)
 
     jwt.init_app(app)
 
