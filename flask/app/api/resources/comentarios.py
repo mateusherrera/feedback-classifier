@@ -37,9 +37,9 @@ class Comentarios(Resource):
     def post(self):
         """ Cria um novo comentário. """
 
-        try:
-            data = request.get_json(force=True)
+        data = request.get_json(force=True)
 
+        try:
             # -- Em lote --
             if isinstance(data, list):
                 textos = list()
@@ -108,8 +108,9 @@ class Comentarios(Resource):
                 'confianca'             : comentario.confianca
             }, 201
 
-        except:
+        except Exception as err:
             # 500 - Internal Server Error
-            return { 'details': 'Erro ao processar o comentário.' }, 500
+            from traceback import format_exc
+            return { 'details': 'Erro ao processar o comentário.', 'traceback': format_exc() }, 500
 
     # end: methods
