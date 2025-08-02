@@ -4,7 +4,7 @@ pipeline {
   environment {
     GITHUB_TOKEN  = credentials('github-token')
     REPO_OWNER    = 'mateusherrera'
-    REPO_NAME     = 'flask-llm-api'
+    REPO_NAME     = 'feedback-classifier'
   }
 
   stages {

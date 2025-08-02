@@ -1,7 +1,7 @@
 services:
   jenkins:
     image: jenkins/jenkins:lts
-    container_name: flask-llm-api_jenkins
+    container_name: feedback-classifier_jenkins
     restart: unless-stopped
     ports:
       - "8080:8080"
