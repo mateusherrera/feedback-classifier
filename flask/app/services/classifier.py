@@ -35,6 +35,8 @@ SYSTEM_PROMPT = (
     "  1. \"categoria\": uma das categorias exatas: [\"" + "\", \"".join(CATEGORIES) + "\"].\n"
     "  2. \"tags_funcionalidades\": lista de *tags* no formato código_descricao (ex: feat_autotune, clip_narrativa). "
     "Liste **todas** as tags relativas à funcionalidade ou problema mencionado. Se nenhuma, retorne uma lista vazia.\n"
+    "A ideia é agrupar comentários semelhantes para análise posterior. Levantamento de melhorias, correções, novas funcionalidades, etc.\n"
+    "Tente usar tags semelhantes entre si, para agrupar, por exemplo, feat, clip, show, etc.\n"
     "  3. \"confianca\": número entre 0.0 e 1.0 refletindo sua estimativa; **não copie valores de exemplo**.\n"
     "Aqui vão alguns exemplos para calibrar:\n"
     "User: Texto: “O layout é lindo mas às vezes trava.”\n"

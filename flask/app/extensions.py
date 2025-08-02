@@ -15,7 +15,10 @@ from flask_jwt_extended import JWTManager
 from app.config import Config
 
 
-metadata = MetaData(schema=Config.PROJECT_SCHEMA)
+if Config.PROJECT_SCHEMA:
+    metadata = MetaData(schema=Config.PROJECT_SCHEMA)
+    db  = SQLAlchemy(metadata=metadata)
+else:
+    db  = SQLAlchemy()
 
-db  = SQLAlchemy(metadata=metadata)
 jwt = JWTManager()

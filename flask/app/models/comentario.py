@@ -11,6 +11,7 @@ Arquivo para definição do modelo de Comntário.
 from uuid import uuid4
 
 from app.extensions import db
+from app.config     import Config
 
 
 class Comentario(db.Model):
@@ -21,7 +22,8 @@ class Comentario(db.Model):
     id          = db.Column( db.String, primary_key=True, default=lambda: str(uuid4())          )
     texto       = db.Column( db.Text, nullable=False                                            )
     categoria   = db.Column( db.String(50), nullable=False                                      )
-    tags        = db.Column( db.ARRAY(db.String), nullable=True                                 )
+    # Para execução de testes com SQLite usar JSON, para produção usar ARRAY
+    tags        = db.Column( db.ARRAY(db.String), nullable=True                                 ) if Config.PROJECT_SCHEMA else db.Column(db.JSON, nullable=True)
     confianca   = db.Column( db.Float, nullable=False                                           )
     created_at  = db.Column( db.DateTime, server_default=db.func.now()                          )
     updated_at  = db.Column( db.DateTime, server_default=db.func.now(), onupdate=db.func.now()  )
