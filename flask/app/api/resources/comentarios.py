@@ -11,9 +11,9 @@ Arquivo para definição de métodos relacionados a comentários.
 from flask          import request
 from flask_restful  import Resource
 
-from models.comentario      import Comentario
-from extensions             import db
-from services.classifier    import (
+from app.models.comentario      import Comentario
+from app.extensions             import db
+from app.services.classifier    import (
     classify_comment,
     classify_batch,
 )

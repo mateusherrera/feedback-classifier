@@ -10,7 +10,7 @@ Arquivo para definição do modelo de Comntário.
 
 from uuid import uuid4
 
-from extensions import db
+from app.extensions import db
 
 
 class Comentario(db.Model):

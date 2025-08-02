@@ -11,7 +11,7 @@ Arquivo de roteamento da API.
 from flask_restful  import Api
 from flask          import Blueprint
 
-from api.resources.comentarios import ComentariosList
+from app.api.resources.comentarios import ComentariosList
 
 
 blueprint   = Blueprint('api', __name__, url_prefix='/api')

@@ -15,7 +15,7 @@ class Config:
     """ Classe de configuração do aplicativo. """
 
     # Ambiente de execução
-    ENV = getenv( 'ENV', 'dev' )
+    FLASK_ENV = getenv( 'FLASK_ENV', 'development' )
 
     # OpenAI API Key
     OPENAI_API_KEY = getenv( 'OPENAI_API_KEY', None )

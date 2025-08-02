@@ -15,7 +15,7 @@ from json               import loads
 from typing             import List, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import Config
+from app.config import Config
 
 
 # Definiar OpenAI API KEY

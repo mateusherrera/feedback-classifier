@@ -9,10 +9,11 @@ Arquivo principal da aplicação Flask.
 """
 
 from flask          import Flask
+from flask_migrate  import Migrate
 
-from config        import Config
-from api.routes    import blueprint
-from extensions    import (
+from app.config        import Config
+from app.api.routes    import blueprint
+from app.extensions    import (
     db,
     jwt,
 )
@@ -30,6 +31,8 @@ def create_app(config_class=Config) -> Flask:
 
     # Inicializa as extensões
     db.init_app(app)
+    Migrate(app, db)
+
     jwt.init_app(app)
 
     # Registra o blueprint
@@ -40,4 +43,4 @@ def create_app(config_class=Config) -> Flask:
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=Config.ENV == 'dev')
+    app.run(host='0.0.0.0', port=5000, debug=Config.FLASK_ENV != 'production')

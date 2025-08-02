@@ -13,22 +13,24 @@ services:
       - "5432:5432"
     volumes:
       - ${PGDATA_PATH}:/var/lib/postgresql/data
+      - ./db/init_scripts:/docker-entrypoint-initdb.d
 
   api:
     restart: unless-stopped
     container_name: ${API_CONTAINER_NAME}
     build:
-      context: ./app
+      context: ./flask
       dockerfile: Dockerfile
     expose:
       - "5000:5000"
     environment:
-      - ENV=${ENV}
-      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - JWT_SECRET=${JWT_SECRET}
+      FLASK_APP: ${FLASK_APP}
+      FLASK_ENV: ${FLASK_ENV}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
-      - ./app:/app
+      - ./flask:/flask
     depends_on:
       - db
 
