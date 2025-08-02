@@ -33,7 +33,7 @@ class Comentarios(Resource):
 
     # ini: methods
 
-    # @jwt_required()
+    @jwt_required()
     def post(self):
         """ Cria um novo comentário. """
 
