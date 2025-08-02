@@ -1,1 +1,1 @@
-CREATE SCHEMA IF NOT EXISTS "flask-llm-api";
+CREATE SCHEMA IF NOT EXISTS "feedback_classifier";

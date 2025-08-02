@@ -6,7 +6,7 @@ Arquivo com funções para classificar textos
 :created at:    2025-08-01
 
 :updated by:    Mateus Herrera
-:updated at:    2025-08-01
+:updated at:    2025-08-02
 """
 
 from openai import OpenAI

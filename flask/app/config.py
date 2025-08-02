@@ -27,4 +27,4 @@ class Config:
     # SQLAlchemy - PostgreSQL
     SQLALCHEMY_DATABASE_URI         = getenv( 'SQLALCHEMY_DATABASE_URI', None )
     SQLALCHEMY_TRACK_MODIFICATIONS  = False
-    PROJECT_SCHEMA                  = 'flask-llm-api'
+    PROJECT_SCHEMA                  = 'feedback_classifier'
