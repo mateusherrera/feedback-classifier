@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard • AluMusic</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 0.9em;
+    }
+
+    th {
+      background-color: #eee;
+    }
+
+    input,
+    select {
+      margin-right: 10px;
+      padding: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Comentários classificados</h1>
+
+  <div>
+    <label>Categoria:</label>
+    <select id="filtro-categoria">
+      <option value="">Todas</option>
+      <option>ELOGIO</option>
+      <option>CRÍTICA</option>
+      <option>SUGESTÃO</option>
+      <option>DÚVIDA</option>
+      <option>SPAM</option>
+    </select>
+
+    <label>Tag:</label>
+    <input type="text" id="filtro-tag" placeholder="Ex: ui_legal" />
+
+    <label>Ordem:</label>
+    <select id="filtro-ordem">
+      <option value="">Padrão (data)</option>
+      <option value="desc">Maior confiança</option>
+      <option value="asc">Menor confiança</option>
+    </select>
+
+    <button onclick="carregarComentarios()">Buscar</button>
+    <button onclick="exportar()">Exportar CSV</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Texto</th>
+        <th>Categoria</th>
+        <th>Tags</th>
+        <th>Confiança</th>
+        <th>Criado em</th>
+        <th>Atualizado em</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function renovarAccessToken() {
+      const refresh = localStorage.getItem('refresh');
+      if (!refresh) return false;
+
+      const r = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + refresh
+        }
+      });
+
+      if (r.ok) {
+        const tokens = await r.json();
+        localStorage.setItem('access', tokens.access);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    async function carregarComentarios() {
+      const renovado = await renovarAccessToken();
+      if (!renovado) return logout();
+
+      const access = localStorage.getItem('access');
+      const categoria = document.getElementById('filtro-categoria').value;
+      const tag = document.getElementById('filtro-tag').value;
+      const ordem = document.getElementById('filtro-ordem').value;
+
+      const params = new URLSearchParams();
+      if (categoria) params.append('categoria', categoria);
+      if (tag) params.append('tag', tag);
+      if (ordem) params.append('ordem', ordem);
+
+      const res = await fetch('/api/comentarios?' + params.toString(), {
+        headers: {
+          'Authorization': 'Bearer ' + access
+        }
+      });
+
+      if (!res.ok) {
+        alert('Erro ao carregar comentários.');
+        return;
+      }
+
+      const dados = await res.json();
+      const tbody = document.querySelector('#tabela tbody');
+      tbody.innerHTML = '';
+
+      for (const c of dados) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>${c.id}</td>
+        <td>${c.texto}</td>
+        <td>${c.categoria}</td>
+        <td>${(c.tags_funcionalidades || []).join(', ')}</td>
+        <td>${c.confianca}</td>
+        <td>${c.created_at}</td>
+        <td>${c.updated_at}</td>
+      `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function exportar() {
+      const renovado = await renovarAccessToken();
+      if (!renovado) return logout();
+
+      const access = localStorage.getItem('access');
+      const categoria = document.getElementById('filtro-categoria').value;
+      const tag = document.getElementById('filtro-tag').value;
+      const ordem = document.getElementById('filtro-ordem').value;
+
+      const params = new URLSearchParams();
+      if (categoria) params.append('categoria', categoria);
+      if (tag) params.append('tag', tag);
+      if (ordem) params.append('ordem', ordem);
+
+      try {
+        const res = await fetch('/api/comentarios/export?' + params.toString(), {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + access
+          }
+        });
+
+        if (!res.ok) throw new Error('Falha ao exportar CSV');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'comentarios_export.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+      } catch (err) {
+        console.error('Erro ao exportar:', err);
+        alert('Erro ao exportar CSV');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      window.location.href = '/';
+    }
+
+    carregarComentarios();
+  </script>
+
+</body>
+
+</html>
