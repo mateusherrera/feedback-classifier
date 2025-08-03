@@ -5,12 +5,12 @@ pipeline {
     REPO_OWNER = 'mateusherrera'
     REPO_NAME  = 'feedback-classifier'
     BRANCH     = 'main'
+    WORKFLOW_NAME = 'CI - Pytest'
   }
 
   stages {
     stage('Disparar GitHub Actions') {
       steps {
-        echo "Disparando GitHub Actions para ${env.REPO_OWNER}/${env.REPO_NAME}"
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
           sh '''
             curl -X POST \
@@ -23,48 +23,53 @@ pipeline {
       }
     }
 
-    stage('Aguardar Resultado') {
+    stage('Aguardar Resultado do GitHub Actions') {
       steps {
-        script {
-          echo "Aguardando resultado do workflow 'CI - Pytest' na branch '${env.BRANCH}'..."
-          withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-            def timeoutMin = 5
-            def pollInterval = 10
-            def waited = 0
-            def runId = null
-            def status = 'in_progress'
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          script {
+            echo "Aguardando resultado do workflow '$WORKFLOW_NAME' na branch '$BRANCH'..."
 
-            while (status == 'in_progress' && waited < timeoutMin * 60) {
-              sleep time: pollInterval, unit: 'SECONDS'
-              waited += pollInterval
+            def workflowRunId = ''
+            def conclusion = ''
+            def status = ''
+            def maxRetries = 30
+            def retryCount = 0
 
-              def json = sh(
-                script: """
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \\
-                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=$BRANCH \\
-                    | jq -r '.workflow_runs[] | select(.name=="CI - Pytest") | .id, .status, .conclusion' | head -n3
-                """,
+            while (retryCount < maxRetries) {
+              def output = sh(
+                script: '''
+                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=$BRANCH" \
+                    | jq -r '.workflow_runs[] | select(.name=="'"$WORKFLOW_NAME"'") | [.id, .status, .conclusion] | @tsv' \
+                    | head -n 1
+                ''',
                 returnStdout: true
-              ).trim().split('\n')
+              ).trim()
 
-              if (json.size() >= 3) {
-                runId   = json[0]
-                status  = json[1]
-                result  = json[2]
+              if (output) {
+                def parts = output.split('\t')
+                if (parts.length == 3) {
+                  workflowRunId = parts[0]
+                  status = parts[1]
+                  conclusion = parts[2]
+
+                  echo "Status: $status | Conclusão: $conclusion"
+
+                  if (status == 'completed') {
+                    break
+                  }
+                }
               }
 
-              echo "Status: ${status} | Resultado parcial: ${result}"
+              sleep(time: 10, unit: 'SECONDS')
+              retryCount++
             }
 
-            if (status != 'completed') {
-              error "Tempo limite atingido aguardando o GitHub Actions"
+            if (conclusion == 'success') {
+              echo "GitHub Actions finalizou com sucesso."
+            } else {
+              error("GitHub Actions falhou ou foi cancelado. Conclusão: ${conclusion}")
             }
-
-            if (result != 'success') {
-              error "Workflow falhou: ${result}"
-            }
-
-            echo "Workflow finalizado com sucesso!"
           }
         }
       }
