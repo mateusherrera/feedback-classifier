@@ -4,13 +4,14 @@ pipeline {
   environment {
     REPO_OWNER = 'mateusherrera'
     REPO_NAME  = 'feedback-classifier'
+    BRANCH     = 'main'
   }
 
   stages {
     stage('Disparar GitHub Actions') {
       steps {
+        echo "Disparando GitHub Actions para ${env.REPO_OWNER}/${env.REPO_NAME}"
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          echo "Disparando GitHub Actions para ${env.REPO_OWNER}/${env.REPO_NAME}"
           sh '''
             curl -X POST \
               -H "Authorization: token $GITHUB_TOKEN" \
@@ -24,60 +25,46 @@ pipeline {
 
     stage('Aguardar Resultado') {
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          script {
-            echo "Aguardando workflow na branch 'main'..."
-            def run_id = ''
-            def max_tries = 30
-            def tries = 0
+        script {
+          echo "Aguardando resultado do workflow 'CI - Pytest' na branch '${env.BRANCH}'..."
+          withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+            def timeoutMin = 5
+            def pollInterval = 10
+            def waited = 0
+            def runId = null
+            def status = 'in_progress'
 
-            while (run_id == '' && tries < max_tries) {
-              sleep time: 10, unit: 'SECONDS'
-              def output = sh(
+            while (status == 'in_progress' && waited < timeoutMin * 60) {
+              sleep time: pollInterval, unit: 'SECONDS'
+              waited += pollInterval
+
+              def json = sh(
                 script: """
                   curl -s -H "Authorization: token $GITHUB_TOKEN" \\
-                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=main
+                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=$BRANCH \\
+                    | jq -r '.workflow_runs[] | select(.name=="CI - Pytest") | .id, .status, .conclusion' | head -n3
                 """,
                 returnStdout: true
-              ).trim()
+              ).trim().split('\n')
 
-              run_id = output.readLines()
-                .findAll { it.contains('"name": "CI - Pytest"') }
-                .withIndex()
-                .find { it[1] + 1 < output.readLines().size() }
-                ?.with { output.readLines()[it[1] + 1] }
-                ?.findAll(/\d+/)?.join('')
+              if (json.size() >= 3) {
+                runId   = json[0]
+                status  = json[1]
+                result  = json[2]
+              }
 
-              tries++
+              echo "Status: ${status} | Resultado parcial: ${result}"
             }
 
-            if (!run_id) {
-              error 'Workflow não encontrado ou não iniciado a tempo.'
+            if (status != 'completed') {
+              error "Tempo limite atingido aguardando o GitHub Actions"
             }
 
-            echo "Workflow ID encontrado: ${run_id}"
-            echo "Aguardando conclusão..."
-
-            def conclusion = ''
-            while (conclusion == '') {
-              sleep time: 10, unit: 'SECONDS'
-              def run_data = sh(
-                script: """
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \\
-                    https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs/$run_id
-                """,
-                returnStdout: true
-              ).trim()
-
-              conclusion = run_data.readLines().find { it.contains('"conclusion"') }?.split(':')?.last()?.replaceAll(/[",]/, '')?.trim()
-              echo "Status atual: ${conclusion ?: 'em execução...'}"
+            if (result != 'success') {
+              error "Workflow falhou: ${result}"
             }
 
-            if (conclusion != 'success') {
-              error "Workflow falhou com status: ${conclusion}"
-            } else {
-              echo 'Workflow do GitHub Actions finalizado com sucesso!'
-            }
+            echo "Workflow finalizado com sucesso!"
           }
         }
       }
