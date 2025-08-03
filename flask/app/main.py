@@ -18,6 +18,7 @@ from app.api.routes    import blueprint
 from app.extensions    import (
     db,
     jwt,
+    cache,
 )
 
 
@@ -47,6 +48,7 @@ def create_app(config_class=Config) -> Flask:
         Migrate(app, db)
 
     jwt.init_app(app)
+    cache.init_app(app)
 
     # Registra o blueprint
     app.register_blueprint(blueprint)

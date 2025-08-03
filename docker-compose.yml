@@ -1,4 +1,11 @@
 services:
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    container_name: ${REDIS_CONTAINER_NAME}
+    ports:
+      - "6379:6379"
+
   db:
     image: postgres:16
     restart: unless-stopped
@@ -33,6 +40,7 @@ services:
     volumes:
       - ./flask:/flask
     depends_on:
+      - redis
       - db
 
   nginx:

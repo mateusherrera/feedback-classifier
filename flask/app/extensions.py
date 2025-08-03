@@ -9,6 +9,8 @@ Arquivo para carregar extensões do Flask.
 """
 
 from sqlalchemy         import MetaData
+
+from flask_caching      import Cache
 from flask_sqlalchemy   import SQLAlchemy
 from flask_jwt_extended import JWTManager
 
@@ -22,3 +24,5 @@ else:
     db  = SQLAlchemy()
 
 jwt = JWTManager()
+
+cache = Cache()
