@@ -8,26 +8,32 @@ Arquivo com implementação de relatórios semanais.
 :updated at:    2025-08-02
 """
 
-import time
-
 from flask_restful  import Resource
 from datetime       import datetime, timedelta
 from collections    import Counter, defaultdict
 
+from app.extensions             import cache
 from app.models.comentario      import Comentario
 from app.services.classifier    import CATEGORIES
-
-
-relatorio_cache = {
-    'dados'     : None,
-    'timestamp' : 0
-}
 
 
 class RelatorioSemanal(Resource):
     """ Classe para geração de relatórios semanais de comentários. """
 
     def get(self):
+        """ Endpoint para administrar cache do relatório semanal. """
+
+        # Tenta pegar do cache
+        relatorios = cache.get('relatorio_semanal')
+        if relatorios is not None:
+            return { 'relatorios': relatorios, 'reload': False }, 200
+
+        # Se não tiver cache, recalcula os relatórios
+        relatorios = self.gerar_relatorio()
+        cache.set('relatorio_semanal', relatorios, timeout=60)
+        return { 'relatorios': relatorios, 'reload': True }, 200
+
+    def gerar_relatorio(self):
         """ Gera 5 relatórios semanais com base nos comentários classificados. """
 
         agora       = datetime.now()
