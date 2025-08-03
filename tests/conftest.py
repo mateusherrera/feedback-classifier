@@ -10,13 +10,14 @@ Arquivo para configuração de testes do Flask.
 
 # Configurações de ambiente para testes
 import os
-os.environ['FLASK_ENV'] = 'testing'
-os.environ['TESTING'] = 'true'
-os.environ['SECRET_KEY'] = 'test-secret'
-os.environ['OPENAI_API_KEY'] = 'fake-openai-key'
-os.environ['JWT_SECRET_KEY'] = 'test-jwt-secret'
-os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'false'
+os.environ['FLASK_ENV']                         = 'testing'
+os.environ['TESTING']                           = 'true'
+os.environ['SECRET_KEY']                        = 'test-secret'
+os.environ['OPENAI_API_KEY']                    = 'fake-openai-key'
+os.environ['JWT_SECRET_KEY']                    = 'test-jwt-secret'
+os.environ['SQLALCHEMY_DATABASE_URI']           = 'sqlite:///:memory:'
+os.environ['SQLALCHEMY_TRACK_MODIFICATIONS']    = 'false'
+os.environ['CACHE_TYPE']                        = 'SimpleCache'
 
 import pytest
 

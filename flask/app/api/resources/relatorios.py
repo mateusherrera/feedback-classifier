@@ -106,4 +106,4 @@ class RelatorioSemanal(Resource):
             'top_tags_48h'                      : top_tags_48h,
             'confianca_media_por_categoria'     : confianca_media,
             'comentarios_por_hora'              : comentarios_por_hora
-        }, 200
+        }
