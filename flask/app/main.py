@@ -13,6 +13,10 @@ from datetime import timedelta
 from flask          import Flask
 from flask_migrate  import Migrate
 
+# HTML
+from app.views.dashboard import web
+
+# API
 from app.config        import Config
 from app.api.routes    import blueprint
 from app.extensions    import (
@@ -52,6 +56,7 @@ def create_app(config_class=Config) -> Flask:
 
     # Registra o blueprint
     app.register_blueprint(blueprint)
+    app.register_blueprint(web)
     return app
 
 

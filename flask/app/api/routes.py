@@ -11,9 +11,10 @@ Arquivo de roteamento da API.
 from flask_restful  import Api
 from flask          import Blueprint
 
-from app.api.resources.comentarios import Comentarios
-from app.api.resources.relatorios  import RelatorioSemanal
-from app.api.resources.auth import (
+from app.api.resources.comentarios          import Comentarios
+from app.api.resources.comentarios_export   import ComentariosExport
+from app.api.resources.relatorios           import RelatorioSemanal
+from app.api.resources.auth                 import (
     Register,
     Refresh,
     Login,
@@ -31,6 +32,7 @@ api.add_resource( Login             , '/auth/login'             )
 
 # Classificador de Comentários
 api.add_resource( Comentarios       , '/comentarios'            )
+api.add_resource( ComentariosExport , '/comentarios/export'     )
 
 # Relatórios
 api.add_resource( RelatorioSemanal  , '/relatorio/semana'       )

@@ -5,18 +5,21 @@ Arquivo para definição de métodos relacionados a comentários.
 :created at:    2025-08-01
 
 :updated by:    Mateus Herrera
-:updated at:    2025-08-02
+:updated at:    2025-08-03
 """
 
 from flask              import request
 from flask_restful      import Resource
 from flask_jwt_extended import jwt_required
 
+from sqlalchemy import asc, desc
+
 from app.models.comentario      import Comentario
 from app.extensions             import db
 from app.services.classifier    import (
     classify_comment,
     classify_batch,
+    CATEGORIES
 )
 
 
@@ -32,6 +35,49 @@ class Comentarios(Resource):
     # end: constants
 
     # ini: methods
+
+    @jwt_required()
+    def get(self):
+        """ Retorna comentários com filtros opcionais. """
+
+        try:
+            # Request Params
+            categoria   = request.args.get('categoria')
+            tag         = request.args.get('tag')
+            ordem       = request.args.get('ordem').lower() if request.args.get('ordem') else None
+
+            query = Comentario.query
+
+            if categoria in CATEGORIES:
+                query = query.filter(Comentario.categoria == categoria)
+
+            if tag:
+                query = query.filter(Comentario.tags.contains([tag]))
+
+            if ordem in ['asc', 'desc']:
+                comentarios = query.order_by(
+                    asc(Comentario.confianca) if ordem == 'asc' else desc(Comentario.confianca)
+                ).all()
+            else:
+                comentarios = query.order_by(Comentario.created_at.desc()).all()
+
+            return [
+                {
+                    'id': c.id,
+                    'texto': c.texto,
+                    'categoria': c.categoria,
+                    'tags_funcionalidades': c.tags,
+                    'confianca': round(c.confianca, 2),
+                    'created_at': c.created_at.isoformat(),
+                    'updated_at': c.updated_at.isoformat()
+                }
+                for c in comentarios
+            ], 200
+
+        except:
+            # 500 - Internal Server Error
+            from traceback import format_exc
+            return { 'details': 'Erro ao buscar comentários.', 'trace': format_exc() }, 500
 
     @jwt_required()
     def post(self):
