@@ -1,16 +1,16 @@
-"""CREATE TABLE: Criando tabelas User e Comentarios
+"""empty message
 
-Revision ID: f81f39637535
+Revision ID: 9cf08cdd329e
 Revises: 
-Create Date: 2025-08-02 19:18:04.067134
+Create Date: 2025-08-03 21:48:25.241928
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'f81f39637535'
+revision = '9cf08cdd329e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('texto', sa.Text(), nullable=False),
     sa.Column('categoria', sa.String(length=50), nullable=False),
-    sa.Column('tags', sa.ARRAY(sa.String()), nullable=True),
+    sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
     sa.Column('confianca', sa.Float(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
