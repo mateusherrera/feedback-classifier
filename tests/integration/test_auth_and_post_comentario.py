@@ -8,8 +8,6 @@ Arquivos de teste para autenticação e postagem de comentários
 :updated at:    2025-08-02
 """
 
-import json
-
 from app.extensions import db
 
 
