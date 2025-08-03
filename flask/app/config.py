@@ -20,6 +20,7 @@ class Config:
 
     # OpenAI API Key
     OPENAI_API_KEY = getenv( 'OPENAI_API_KEY', None )
+    LLM_MODEL      = 'gpt-3.5-turbo'
 
     # JWT Secret
     JWT_SECRET_KEY = getenv( 'JWT_SECRET_KEY', None )

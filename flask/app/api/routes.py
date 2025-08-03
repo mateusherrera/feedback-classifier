@@ -12,8 +12,9 @@ from flask_restful  import Api
 from flask          import Blueprint
 
 from app.api.resources.comentarios          import Comentarios
-from app.api.resources.comentarios_export   import ComentariosExport
 from app.api.resources.relatorios           import RelatorioSemanal
+from app.api.resources.comentarios_export   import ComentariosExport
+from app.api.resources.summary              import ResumoSemanalResource
 from app.api.resources.auth                 import (
     Register,
     Refresh,
@@ -26,13 +27,16 @@ api         = Api(blueprint)
 
 # Registro de endpoints
 # Auth
-api.add_resource( Register          , '/auth/register'          )
-api.add_resource( Refresh           , '/auth/refresh'           )
-api.add_resource( Login             , '/auth/login'             )
+api.add_resource( Register              , '/auth/register'          )
+api.add_resource( Refresh               , '/auth/refresh'           )
+api.add_resource( Login                 , '/auth/login'             )
 
 # Classificador de Comentários
-api.add_resource( Comentarios       , '/comentarios'            )
-api.add_resource( ComentariosExport , '/comentarios/export'     )
+api.add_resource( Comentarios           , '/comentarios'            )
+api.add_resource( ComentariosExport     , '/comentarios/export'     )
 
 # Relatórios
-api.add_resource( RelatorioSemanal  , '/relatorio/semana'       )
+api.add_resource( RelatorioSemanal      , '/relatorio/semana'       )
+
+# Resumo Semanal
+api.add_resource( ResumoSemanalResource , '/resumo/semana'          )
