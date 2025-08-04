@@ -38,6 +38,7 @@ def gerar_resumo_semana() -> str:
         f"{textos}\n\n"
         "Gere um texto conciso de até 200 palavras, apontando categorias em alta, críticas recorrentes e sugestões relevantes."
         "Seria interessante pontuar explicitamente pontos de melhorias em forma de novas features ou melhorias de UX.\n"
+        "Formato de e-mail, assine como 'Feedbacks por IA', inicie com 'Olá'.\n\n"
     )
 
     resp = openai.chat.completions.create(

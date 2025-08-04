@@ -46,7 +46,7 @@ def enviar_resumo_semanal():
 
         # Envia por e-mail
         msg = Message(
-            subject="Resumo Semanal de Feedbacks",
+            subject="Resumo Semanal",
             recipients=getenv("STAKEHOLDERS_EMAILS", "").split(","),
             body=texto,
         )
