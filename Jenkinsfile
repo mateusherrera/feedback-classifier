@@ -26,10 +26,10 @@ pipeline {
 def runOnGitHub(workflowFile, testFile) {
   echo "▶ Disparando ${workflowFile} [${testFile}]…"
   sh """
-    curl -s -X POST \
-      -H "Accept: application/vnd.github+json" \
-      -H "Authorization: token $GITHUB_TOKEN" \
-      https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/dispatches \
+    curl -s -X POST \\
+      -H "Accept: application/vnd.github+json" \\
+      -H "Authorization: token $GITHUB_TOKEN" \\
+      https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/dispatches \\
       -d '{ "ref":"$REF", "inputs":{"test_file":"$testFile"} }'
   """
 
@@ -37,8 +37,8 @@ def runOnGitHub(workflowFile, testFile) {
     waitUntil {
       def status = sh(
         script: """
-          curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \
+          curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+            https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \\
           | jq -r '.workflow_runs[0].status'
         """,
         returnStdout: true
@@ -49,16 +49,18 @@ def runOnGitHub(workflowFile, testFile) {
 
   def conclusion = sh(
     script: """
-      curl -s -H "Authorization: token $GITHUB_TOKEN" \
-        https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \
+      curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+        https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \\
       | jq -r '.workflow_runs[0].conclusion'
     """,
     returnStdout: true
   ).trim()
 
   if (conclusion == 'success') {
-    echo "\u001B[1;32m✔  ${testFile} executado com sucesso\u001B[0m"
+    // ✔️ é o Heavy Check Mark com emoji-variant (verde)
+    echo "✔️  ${testFile} executado com sucesso"
   } else {
-    error("\u001B[31m❌  ${workflowFile}[${testFile}] retornou: ${conclusion}\u001B[0m")
+    // ❌ é o Cross Mark emoji (vermelho)
+    error "❌  ${workflowFile}[${testFile}] retornou: ${conclusion}"
   }
 }
