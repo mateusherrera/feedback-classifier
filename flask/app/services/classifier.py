@@ -21,6 +21,8 @@ from app.config import Config
 # Criar cliente OpenAI
 openai = OpenAI(api_key=Config.OPENAI_API_KEY)
 
+LLM_MODEL = Config.LLM_MODEL
+
 CATEGORIES = [
     'ELOGIO',
     'CRÍTICA',
@@ -48,7 +50,7 @@ SYSTEM_PROMPT = (
 )
 
 
-def classify_comment(text: str, model: str = 'gpt-3.5-turbo') -> Tuple[str, List[str], float]:
+def classify_comment(text: str, model: str = LLM_MODEL) -> Tuple[str, List[str], float]:
     """
     Essa função classifica um comentário de texto em uma das categorias predefinidas, identifica tags de funcionalidade e  .
 
