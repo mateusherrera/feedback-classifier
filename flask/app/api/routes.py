@@ -12,6 +12,7 @@ from flask_restful  import Api
 from flask          import Blueprint
 
 from app.api.resources.comentarios          import Comentarios
+from app.api.resources.insights             import InsightPerguntar
 from app.api.resources.relatorios           import RelatorioSemanal
 from app.api.resources.comentarios_export   import ComentariosExport
 from app.api.resources.auth                 import (
@@ -36,3 +37,6 @@ api.add_resource( ComentariosExport     , '/comentarios/export'     )
 
 # Relatórios
 api.add_resource( RelatorioSemanal      , '/relatorio/semana'       )
+
+# Insights
+api.add_resource( InsightPerguntar      , '/insights/perguntar'     )
