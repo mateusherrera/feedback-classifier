@@ -14,7 +14,6 @@ from flask          import Blueprint
 from app.api.resources.comentarios          import Comentarios
 from app.api.resources.relatorios           import RelatorioSemanal
 from app.api.resources.comentarios_export   import ComentariosExport
-from app.api.resources.summary              import ResumoSemanalResource
 from app.api.resources.auth                 import (
     Register,
     Refresh,
@@ -37,6 +36,3 @@ api.add_resource( ComentariosExport     , '/comentarios/export'     )
 
 # Relatórios
 api.add_resource( RelatorioSemanal      , '/relatorio/semana'       )
-
-# Resumo Semanal
-api.add_resource( ResumoSemanalResource , '/resumo/semana'          )

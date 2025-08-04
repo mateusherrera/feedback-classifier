@@ -35,13 +35,68 @@ services:
       FLASK_ENV: ${FLASK_ENV}
       SECRET_KEY: ${SECRET_KEY}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
       SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
+      STAKEHOLDERS_EMAILS: ${STAKEHOLDERS_EMAILS}
     volumes:
       - ./flask:/flask
     depends_on:
       - redis
       - db
+
+  celery_worker:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    container_name: celery_worker
+    restart: unless-stopped
+    command: celery -A app.tasks worker --loglevel=info
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
+      STAKEHOLDERS_EMAILS: ${STAKEHOLDERS_EMAILS}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - redis
+      - db
+      - api
+
+  celery_beat:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    container_name: celery_beat
+    restart: unless-stopped
+    command: celery -A app.tasks beat --loglevel=info
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
+      STAKEHOLDERS_EMAILS: ${STAKEHOLDERS_EMAILS}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - redis
+      - db
+      - api
 
   nginx:
     restart: unless-stopped

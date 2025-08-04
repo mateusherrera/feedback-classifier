@@ -37,3 +37,12 @@ class Config:
     CACHE_REDIS_PORT        = int( getenv('CACHE_REDIS_PORT', 6379) )
     CACHE_REDIS_DB          = int( getenv('CACHE_REDIS_DB', 0) )
     CACHE_DEFAULT_TIMEOUT   = int( getenv('CACHE_DEFAULT_TIMEOUT', 60) )
+
+    # Email Configuration
+    MAIL_SERVER         = getenv("MAIL_SERVER")
+    MAIL_PORT           = int(getenv("MAIL_PORT", 587))
+    MAIL_USE_TLS        = True
+    MAIL_USERNAME       = getenv("MAIL_USERNAME")
+    MAIL_PASSWORD       = getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = getenv("MAIL_DEFAULT_SENDER")
+    CELERY_BROKER_URL   = getenv("CELERY_BROKER_URL", "redis://redis:6379/0")

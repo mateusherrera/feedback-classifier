@@ -66,14 +66,14 @@ class RelatorioSemanal(Resource):
             if c.created_at >= ha_24_horas:
                 por_hora[hora] += 1
 
-        # 1. Distribuição de Categorias
+        # Distribuição de Categorias
         total = sum(categoria_freq.values())
         distrib_categorias = {
             cat: round((categoria_freq[cat] / total) * 100, 2) if total else 0.0
             for cat in CATEGORIES
         }
 
-        # 2. Evolução Temporal por Categoria (últimos 7 dias)
+        # Evolução Temporal por Categoria (últimos 7 dias)
         evolucao_temporal = []
         dias_ordenados = sorted(categoria_por_dia.keys())
         for dia in dias_ordenados:
@@ -82,19 +82,19 @@ class RelatorioSemanal(Resource):
                 data[cat] = categoria_por_dia[dia][cat]
             evolucao_temporal.append(data)
 
-        # 3. Top 10 tags nas últimas 48h
+        # Top 10 tags nas últimas 48h
         top_tags_48h = [
             {'tag': tag, 'frequencia': count}
             for tag, count in tags_48h.most_common(10)
         ]
 
-        # 4. Confiabilidade Média por Categoria
+        # Confiabilidade Média por Categoria
         confianca_media = {
             cat: round(sum(vals) / len(vals), 2) if vals else 0.0
             for cat, vals in confianca_categoria.items()
         }
 
-        # 5. Comentários por Hora
+        # Comentários por Hora
         comentarios_por_hora = [
             {'hora': hora, 'quantidade': por_hora[hora]}
             for hora in sorted(por_hora.keys())

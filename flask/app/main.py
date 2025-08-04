@@ -5,7 +5,7 @@ Arquivo principal da aplicação Flask.
 :created at:    2025-08-01
 
 :updated by:    Mateus Herrera
-:updated at:    2025-08-02
+:updated at:    2025-08-03
 """
 
 from datetime import timedelta
@@ -13,16 +13,15 @@ from datetime import timedelta
 from flask          import Flask
 from flask_migrate  import Migrate
 
-# HTML
 from app.views.dashboard import web
 
-# API
 from app.config        import Config
 from app.api.routes    import blueprint
 from app.extensions    import (
     db,
     jwt,
     cache,
+    mail,
 )
 
 
@@ -37,7 +36,7 @@ def create_app(config_class=Config) -> Flask:
     app.config.from_object(config_class)
 
     # Secret keys
-    app.config['SECRET_KEY']        = Config.SECRET_KEY
+    app.config['SECRET_KEY'] = Config.SECRET_KEY
 
     # Configuração do JWT
     app.config['JWT_SECRET_KEY']            = Config.JWT_SECRET_KEY
@@ -53,6 +52,7 @@ def create_app(config_class=Config) -> Flask:
 
     jwt.init_app(app)
     cache.init_app(app)
+    mail.init_app(app)
 
     # Registra o blueprint
     app.register_blueprint(blueprint)
