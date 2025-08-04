@@ -14,9 +14,7 @@ from datetime               import datetime, timedelta
 
 
 def test_register_login_and_post_comment(client, app):
-    """
-    Função para teste de registro, login e listagem de comentários com filtros e ordenação.
-    """
+    """ Função para teste de registro, login e listagem de comentários com filtros e ordenação. """
 
     agora       = datetime.now()
     ontem       = agora - timedelta(days=1)
