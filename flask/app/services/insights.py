@@ -33,8 +33,8 @@ def gerar_insight(pergunta: str, num_resumos: int = 3, max_palavras: int = 150):
     resumos = (ResumoSemanal.query.order_by(ResumoSemanal.created_at.desc()).limit(num_resumos).all())
 
     # Montar contexto e extrair identificador de semana
-    contextos = []
-    semanas = []
+    contextos = list()
+    semanas = list()
     for r in resumos:
         year, week, _ = r.created_at.isocalendar()
         semana_str = f"{year}-W{week:02d}"
