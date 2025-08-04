@@ -1,6 +1,5 @@
 """
-Arquivo com funções para classificar textos
-    Este módulo contém funções para classificar textos usando LLM da OpenAI.
+Arquivo com funções para classificar textos.
 
 :created by:    Mateus Herrera
 :created at:    2025-08-01
@@ -32,14 +31,26 @@ CATEGORIES = [
 ]
 
 SYSTEM_PROMPT = (
-    "Você é um classificador de comentários. "
+    "Você é um classificador de comentários que deve gerar tags de backlog para desenvolvimento de software. "
     "Ao receber um texto de comentário, analise-o e retorne apenas um OBJETO JSON VÁLIDO com estes campos:\n"
-    "  1. \"categoria\": uma das categorias exatas: [\"" + "\", \"".join(CATEGORIES) + "\"].\n"
-    "  2. \"tags_funcionalidades\": lista de *tags* no formato código_descricao (ex: feat_autotune, clip_narrativa). "
-    "Liste **todas** as tags relativas à funcionalidade ou problema mencionado. Se nenhuma, retorne uma lista vazia.\n"
-    "A ideia é agrupar comentários semelhantes para análise posterior. Levantamento de melhorias, correções, novas funcionalidades, etc.\n"
-    "Tente usar tags semelhantes entre si, para agrupar, por exemplo, feat, clip, show, etc.\n"
-    "  3. \"confianca\": número entre 0.0 e 1.0 refletindo sua estimativa; **não copie valores de exemplo**.\n"
+    "\n"
+    "1. \"categoria\": uma das categorias exatas: [\"" + "\", \"".join(CATEGORIES) + "\"].\n"
+    "\n"
+    "2. \"tags_funcionalidades\": lista de tags no formato EXATO 'escopo_descricao' (duas palavras separadas por underscore).\n"
+    "   - ESCOPOS permitidos: feat (nova funcionalidade), fix (correção), perf (performance), ui (interface), doc (documentação), test (testes), sec (segurança), api (API).\n"
+    "   - DESCRIÇÃO: uma palavra que identifica o que está sendo mencionado.\n"
+    "   - Exemplos válidos: feat_notificacao, fix_login, perf_carregamento, ui_layout, api_autenticacao.\n"
+    "   - Se não identificar funcionalidades específicas, retorne lista vazia [].\n"
+    "\n"
+    "3. \"confianca\": número entre 0.0 e 1.0 refletindo sua certeza na classificação.\n"
+    "\n"
+    "INSTRUÇÕES IMPORTANTES:\n"
+    "- Analise o comentário buscando funcionalidades, problemas ou melhorias mencionadas\n"
+    "- Para cada item identificado, gere uma tag no formato escopo_descricao\n"
+    "- Use escopos consistentes para facilitar agrupamento no backlog\n"
+    "- Seja preciso: se o usuário fala sobre 'botão não funciona', use fix_botao\n"
+    "- Se menciona 'nova funcionalidade X', use feat_x\n"
+    "- Retorne APENAS o JSON, sem explicações adicionais\n"
     "Aqui vão alguns exemplos para calibrar:\n"
     "User: Texto: “O layout é lindo mas às vezes trava.”\n"
     "Bot: {\"categoria\":\"CRÍTICA\",\"tags_funcionalidades\":[\"ui_estetica\",\"performance_travamento\"],\"confianca\":0.82}\n"
@@ -52,11 +63,11 @@ SYSTEM_PROMPT = (
 
 def classify_comment(text: str, model: str = LLM_MODEL) -> Tuple[str, List[str], float]:
     """
-    Essa função classifica um comentário de texto em uma das categorias predefinidas, identifica tags de funcionalidade e  .
+    Classifica um comentário de texto em uma das categorias predefinidas e gera tags de backlog.
 
     :param text:    Texto do comentário a ser classificado.
     :param model:   Modelo da OpenAI a ser utilizado para classificação.
-    :return:        Uma tupla contendo a categoria classificada, as categorias possíveis e a probabilidade da classificação.
+    :return:        Uma tupla contendo (categoria, tags_funcionalidades, confianca).
     """
 
     messages = [
@@ -67,8 +78,9 @@ def classify_comment(text: str, model: str = LLM_MODEL) -> Tuple[str, List[str],
     response = openai.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.2,
-        max_tokens=150,
+        temperature=0.1,  # Reduzida para maior consistência
+        max_tokens=200,   # Aumentado para acomodar JSON mais estruturado
+        response_format={"type": "json_object"},  # Força resposta em JSON
     )
 
     content = response.choices[0].message.content.strip()
