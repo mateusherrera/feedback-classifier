@@ -1,0 +1,38 @@
+name: Unit Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_file:
+        description: 'Arquivo de teste de unidade em tests/unit (ex: test_classifier.py)'
+        required: true
+        default: 'test_classifier.py'
+
+jobs:
+  pytest-unit:
+    name: Unit ▶ ${{ github.event.inputs.test_file }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        run: |
+          mkdir -p reports
+          pytest tests/unit/${{ github.event.inputs.test_file }} \
+            --maxfail=1 --disable-warnings \
+            --junitxml=reports/unit-${{ github.event.inputs.test_file }}.xml
+
+      - name: Upload unit-test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-${{ github.event.inputs.test_file }}.xml
+          path: reports/unit-${{ github.event.inputs.test_file }}.xml
