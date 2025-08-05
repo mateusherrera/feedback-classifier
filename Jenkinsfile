@@ -2,65 +2,77 @@ pipeline {
   agent any
 
   environment {
-    REPO         = 'mateusherrera/feedback-classifier'
-    REF          = 'main'
-    GITHUB_TOKEN = credentials('github-token')
+    REPO_OWNER = 'mateusherrera'
+    REPO_NAME  = 'feedback-classifier'
+    BRANCH     = 'main'
+    WORKFLOW_NAME = 'CI - Pytest'
   }
 
   stages {
-    stage('Run All Tests') {
+    stage('Disparar GitHub Actions') {
       steps {
-        // aqui ativamos o wrapper ANSI só para este bloco
-        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          sh '''
+            curl -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches \
+              -d '{"event_type":"ci-pipeline"}'
+          '''
+        }
+      }
+    }
+
+    stage('Aguardar Resultado do GitHub Actions') {
+      steps {
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
           script {
-            // seu laço de testes (unit + integration)
-            runOnGitHub('unit-tests.yml', 'test_classifier.py')
-            runOnGitHub('integration-tests.yml', 'test_integration.py')
+            echo "Aguardando resultado do workflow '$WORKFLOW_NAME' na branch '$BRANCH'..."
+
+            def workflowRunId = ''
+            def conclusion = ''
+            def status = ''
+            def maxRetries = 30
+            def retryCount = 0
+
+            while (retryCount < maxRetries) {
+              def output = sh(
+                script: '''
+                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=$BRANCH" \
+                    | jq -r '.workflow_runs[] | select(.name=="'"$WORKFLOW_NAME"'") | [.id, .status, .conclusion] | @tsv' \
+                    | head -n 1
+                ''',
+                returnStdout: true
+              ).trim()
+
+              if (output) {
+                def parts = output.split('\t')
+                if (parts.length == 3) {
+                  workflowRunId = parts[0]
+                  status = parts[1]
+                  conclusion = parts[2]
+
+                  echo "Status: $status | Conclusão: $conclusion"
+
+                  if (status == 'completed') {
+                    break
+                  }
+                }
+              }
+
+              sleep(time: 10, unit: 'SECONDS')
+              retryCount++
+            }
+
+            if (conclusion == 'success') {
+              echo "GitHub Actions finalizou com sucesso."
+            } else {
+              error("GitHub Actions falhou ou foi cancelado. Conclusão: ${conclusion}")
+            }
           }
         }
       }
     }
-  }
-}
-
-def runOnGitHub(workflowFile, testFile) {
-  echo "▶ Disparando ${workflowFile} [${testFile}]…"
-  sh """
-    curl -s -X POST \\
-      -H "Accept: application/vnd.github+json" \\
-      -H "Authorization: token $GITHUB_TOKEN" \\
-      https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/dispatches \\
-      -d '{ "ref":"$REF", "inputs":{"test_file":"$testFile"} }'
-  """
-
-  timeout(time: 5, unit: 'MINUTES') {
-    waitUntil {
-      def status = sh(
-        script: """
-          curl -s -H "Authorization: token $GITHUB_TOKEN" \\
-            https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \\
-          | jq -r '.workflow_runs[0].status'
-        """,
-        returnStdout: true
-      ).trim()
-      return status == 'completed'
-    }
-  }
-
-  def conclusion = sh(
-    script: """
-      curl -s -H "Authorization: token $GITHUB_TOKEN" \\
-        https://api.github.com/repos/$REPO/actions/workflows/$workflowFile/runs?per_page=1 \\
-      | jq -r '.workflow_runs[0].conclusion'
-    """,
-    returnStdout: true
-  ).trim()
-
-  if (conclusion == 'success') {
-    // ✔️ é o Heavy Check Mark com emoji-variant (verde)
-    echo "✔️  ${testFile} executado com sucesso"
-  } else {
-    // ❌ é o Cross Mark emoji (vermelho)
-    error "❌  ${workflowFile}[${testFile}] retornou: ${conclusion}"
   }
 }
