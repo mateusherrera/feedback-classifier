@@ -18,14 +18,14 @@ pipeline {
               script: '''curl -s -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Accept: application/vnd.github.v3+json" \
                 https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows \
-                | jq -r '.workflows[] | select(.name=="'"$WORKFLOW_NAME"'") | .id''''',
+                | jq -r '.workflows[] | select(.name=="'"$WORKFLOW_NAME"'") | .id''',
               returnStdout: true
             ).trim()
 
             def lastRunId = sh(
               script: '''curl -s -H "Authorization: token $GITHUB_TOKEN" \
                 "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$workflowId/runs?branch=$BRANCH&per_page=1" \
-                | jq -r '.workflow_runs[0].id // empty''''',
+                | jq -r '.workflow_runs[0].id // empty''',
               returnStdout: true
             ).trim()
 
@@ -45,7 +45,7 @@ pipeline {
               def out = sh(
                 script: '''curl -s -H "Authorization: token $GITHUB_TOKEN" \
                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$workflowId/runs?branch=$BRANCH&per_page=1" \
-                  | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv''''',
+                  | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv''',
                 returnStdout: true
               ).trim()
 
