@@ -24,7 +24,7 @@ pipeline {
             ''',
             returnStdout: true
           ).trim()
-          echo "Workflow ID = $WORKFLOW_ID"
+          echo "Workflow ID = ${WORKFLOW_ID}"
         }
       }
     }
@@ -35,12 +35,12 @@ pipeline {
           env.LAST_RUN_ID = sh(
             script: '''
               curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?branch=$BRANCH&per_page=1" \
+                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${WORKFLOW_ID}/runs?branch=$BRANCH&per_page=1" \
                 | jq -r '.workflow_runs[0].id'
             ''',
             returnStdout: true
           ).trim()
-          echo "Último run antes do dispatch = $LAST_RUN_ID"
+          echo "Último run antes do dispatch = ${LAST_RUN_ID}"
         }
       }
     }
@@ -51,7 +51,7 @@ pipeline {
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/dispatches \
+            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${WORKFLOW_ID}/dispatches \
             -d '{"ref":"'"$BRANCH"'"}'
         '''
       }
@@ -73,7 +73,7 @@ pipeline {
             def output = sh(
               script: """
                 curl -s -H "Authorization: token \$GITHUB_TOKEN" \
-                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\$WORKFLOW_ID/runs?branch=\$BRANCH&per_page=1" \
+                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\${WORKFLOW_ID}/runs?branch=\$BRANCH&per_page=1" \
                   | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv'
               """,
               returnStdout: true
@@ -86,7 +86,7 @@ pipeline {
               conclusion = parts[2] ?: ''
 
               // só passa adiante quando for o run disparado agora
-              if (newRunId != $LAST_RUN_ID) {
+              if (newRunId != ${LAST_RUN_ID}) {
                 echo "Found run ${newRunId}: status=${status}, conclusion=${conclusion}"
                 if (status == 'completed') {
                   break
