@@ -1,8 +1,8 @@
+def workflowId = ''
+def lastRunId = ''
+
 pipeline {
   agent any
-
-  def workflowId = ''
-  def lastRunId = ''
 
   environment {
     REPO_OWNER     = 'mateusherrera'
