@@ -9,81 +9,171 @@ pipeline {
   }
 
   stages {
-    stage('Dispatch & Wait') {
+    stage('Dispatch GitHub Actions Workflow') {
       steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
           script {
-            // 1) Captura workflow ID
-            def workflowId = sh(
-              script: '''\
-                curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                  -H "Accept: application/vnd.github.v3+json" \
-                  https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows \
-                | jq -r ".workflows[] | select(.name==\\"$WORKFLOW_NAME\\") | .id"\
-                ''',
-              returnStdout: true
-            ).trim()
+            try {
+              // 1) Buscar workflow ID
+              echo "🔍 Searching for workflow '${WORKFLOW_NAME}'..."
+              
+              def workflowsResponse = httpRequest(
+                httpMode: 'GET',
+                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows",
+                customHeaders: [
+                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Accept', value: 'application/vnd.github.v3+json']
+                ],
+                consoleLogResponseBody: false
+              )
 
-            // 2) Captura último run antes do dispatch
-            def lastRunId = sh(
-              script: '''\
-                cu-rl -s -H "Authorization: token $GITHUB_TOKEN" \
-                  H "Accept: application/vnd.github.v3+json" \
-                  "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/'"${workflowId}"'/runs?branch=$BRANCH&per_page=1" \
-                | jq -r ".workflow_runs[0].id // empty"\
-                ''',
-              returnStdout: true
-            ).trim()
-
-            echo "Workflow ID = ${workflowId}, Last run = ${lastRunId ?: 'nenhum'}"
-
-            // 3) Dispara o workflow
-            sh '''\
-              curl -X POST \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Accept: application/vnd.github.v3+json" \
-                https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/'"${workflowId}"'/dispatches \
-                -d '{"ref":"'"$BRANCH"'"}'\
-              '''
-
-            // 4) Polling até o novo run completar
-            def newRunId = ''
-            def status   = ''
-            def conclusion = ''
-
-            for (int i = 0; i < 30; i++) {
-              def out = sh(
-                script: '''\
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/'"${workflowId}"'/runs?branch=$BRANCH&per_page=1" \
-                  | jq -r ".workflow_runs[0] | [.id, .status, .conclusion] | @tsv"\
-                  ''',
-                returnStdout: true
-              ).trim()
-
-              def parts = out.tokenize('\t')
-              newRunId   = parts[0]
-              status     = parts[1]
-              conclusion = parts.size() > 2 ? parts[2] : ''
-
-              if (newRunId != lastRunId && status == 'completed') {
-                echo "→ Run ${newRunId} completed (${conclusion})"
-                break
+              def workflows = readJSON text: workflowsResponse.content
+              def targetWorkflow = workflows.workflows.find { it.name == WORKFLOW_NAME }
+              
+              if (!targetWorkflow) {
+                error "❌ Workflow '${WORKFLOW_NAME}' not found in repository"
               }
-              echo "→ Waiting for new run… current = ${newRunId}"
-              sleep time: 10, unit: 'SECONDS'
-            }
+              
+              def workflowId = targetWorkflow.id
+              echo "✅ Found workflow ID: ${workflowId}"
 
-            // 5) Verifica sucesso/falha
-            if (status == 'completed' && conclusion == 'success') {
-              echo "✅ Workflow succeeded (run ${newRunId})"
-            } else {
-              error "❌ Workflow failed: status=${status}, conclusion=${conclusion}"
+              // 2) Obter último run ID antes do dispatch
+              echo "📋 Getting latest run ID..."
+              
+              def runsResponse = httpRequest(
+                httpMode: 'GET',
+                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
+                customHeaders: [
+                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Accept', value: 'application/vnd.github.v3+json']
+                ],
+                consoleLogResponseBody: false
+              )
+
+              def runs = readJSON text: runsResponse.content
+              def lastRunId = runs.workflow_runs.size() > 0 ? runs.workflow_runs[0].id : null
+              
+              echo "Last run ID: ${lastRunId ?: 'none'}"
+
+              // 3) Disparar workflow
+              echo "🚀 Dispatching workflow..."
+              
+              def dispatchResponse = httpRequest(
+                httpMode: 'POST',
+                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/dispatches",
+                customHeaders: [
+                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Accept', value: 'application/vnd.github.v3+json'],
+                  [name: 'Content-Type', value: 'application/json']
+                ],
+                requestBody: """{"ref":"${BRANCH}"}""",
+                consoleLogResponseBody: false
+              )
+
+              if (dispatchResponse.status != 204) {
+                error "❌ Failed to dispatch workflow. Status: ${dispatchResponse.status}"
+              }
+              
+              echo "✅ Workflow dispatched successfully"
+
+              // 4) Aguardar e monitorar execução
+              echo "⏳ Waiting for workflow to start and complete..."
+              
+              def maxAttempts = 60  // 10 minutos total
+              def newRunId = null
+              def finalStatus = null
+              def finalConclusion = null
+              def found = false
+
+              sleep time: 10, unit: 'SECONDS'  // Aguarda workflow aparecer
+
+              for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                  def currentRunsResponse = httpRequest(
+                    httpMode: 'GET',
+                    url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
+                    customHeaders: [
+                      [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                      [name: 'Accept', value: 'application/vnd.github.v3+json']
+                    ],
+                    consoleLogResponseBody: false
+                  )
+
+                  def currentRuns = readJSON text: currentRunsResponse.content
+                  
+                  if (currentRuns.workflow_runs.size() == 0) {
+                    echo "→ Attempt ${attempt}/${maxAttempts}: No runs found yet"
+                    sleep time: 10, unit: 'SECONDS'
+                    continue
+                  }
+
+                  def latestRun = currentRuns.workflow_runs[0]
+                  newRunId = latestRun.id
+                  finalStatus = latestRun.status
+                  finalConclusion = latestRun.conclusion
+
+                  // Verificar se é um novo run
+                  if (newRunId != lastRunId) {
+                    if (finalStatus == 'completed') {
+                      echo "✅ New run ${newRunId} completed with conclusion: ${finalConclusion}"
+                      found = true
+                      break
+                    } else {
+                      echo "→ Attempt ${attempt}/${maxAttempts}: Run ${newRunId} in progress (${finalStatus})"
+                    }
+                  } else {
+                    echo "→ Attempt ${attempt}/${maxAttempts}: Waiting for new run to appear..."
+                  }
+
+                  sleep time: 10, unit: 'SECONDS'
+
+                } catch (Exception e) {
+                  echo "→ Attempt ${attempt}/${maxAttempts}: Error checking status - ${e.getMessage()}"
+                  sleep time: 10, unit: 'SECONDS'
+                }
+              }
+
+              // 5) Verificar resultado final
+              if (!found) {
+                error "❌ Timeout: Workflow did not complete within ${maxAttempts * 10} seconds"
+              }
+
+              switch (finalConclusion) {
+                case 'success':
+                  echo "🎉 Workflow completed successfully! (Run ID: ${newRunId})"
+                  break
+                case 'failure':
+                  error "❌ Workflow failed (Run ID: ${newRunId})"
+                  break
+                case 'cancelled':
+                  error "❌ Workflow was cancelled (Run ID: ${newRunId})"
+                  break
+                case 'timed_out':
+                  error "❌ Workflow timed out (Run ID: ${newRunId})"
+                  break
+                default:
+                  error "❌ Workflow completed with unexpected conclusion: ${finalConclusion} (Run ID: ${newRunId})"
+              }
+
+            } catch (Exception e) {
+              echo "❌ Pipeline failed with error: ${e.getMessage()}"
+              throw e
             }
           }
         }
       }
+    }
+  }
+
+  post {
+    always {
+      echo "🔄 Pipeline execution completed"
+    }
+    success {
+      echo "✅ Pipeline succeeded - GitHub Actions workflow completed successfully"
+    }
+    failure {
+      echo "❌ Pipeline failed - Check logs for details"
     }
   }
 }
