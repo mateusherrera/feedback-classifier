@@ -1,7 +1,7 @@
 name: CI - Pytest
 
 on:
-  repository_dispatch:
+  workflow_dispatch: 
     types: [ci-pipeline]
 
 jobs:
