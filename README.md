@@ -45,6 +45,16 @@ Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, 
 
 ## Descrição do Projeto
 
+Esse projeto se trata de um API REST, desenvolvida em Flask + Flask RESTful, com o objetivo de fornecer endpoints para analise e acopanhamento de tendencias nos cometário da AluMusic.
+
+Para foram feitos:
+1. Endpoint para classficação (unitário ou em lote) de comentário quanto a sua categoria.
+2. Endpoint que fornece JSONs (atualizado a cada 60s) para contrução de 5 gráficos diferentes.
+3. Interface simples e privada para consulta dos cometários classificados.
+4. Resumo semanal dos  cometários enviado por e-mail aos stakeholders.
+5. Método para avaliação dos dados classificados, considerando recall, precision e f1-score.
+6. *Extra:* Endpoint para pergunta livre em linguagem natural. A resposta tem como base os últimos 3 relatórios semanais enviados.
+
 ## Documentação
 
 ## Como rodar o Projeto
