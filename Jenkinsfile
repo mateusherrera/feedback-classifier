@@ -2,74 +2,108 @@ pipeline {
   agent any
 
   environment {
-    REPO_OWNER = 'mateusherrera'
-    REPO_NAME  = 'feedback-classifier'
-    BRANCH     = 'main'
-    WORKFLOW_NAME = 'CI - Pytest'
+    REPO_OWNER     = 'mateusherrera'
+    REPO_NAME      = 'feedback-classifier'
+    BRANCH         = 'main'
+    WORKFLOW_NAME  = 'CI - Pytest'
+
+    // carrega o token como variável de ambiente em todo o pipeline
+    GITHUB_TOKEN   = credentials('github-token')
   }
 
   stages {
-    stage('Disparar GitHub Actions') {
+    stage('1. Obter workflow ID') {
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          sh '''
-            curl -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches \
-              -d '{"event_type":"ci-pipeline"}'
-          '''
+        script {
+          workflowId = sh(
+            script: '''
+              curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                   -H "Accept: application/vnd.github.v3+json" \
+                   https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows \
+                | jq -r '.workflows[] | select(.name=="'"$WORKFLOW_NAME"'") | .id'
+            ''',
+            returnStdout: true
+          ).trim()
+          echo "Workflow ID = ${workflowId}"
         }
       }
     }
 
-    stage('Aguardar Resultado do GitHub Actions') {
+    stage('2. Capture último run antes do dispatch') {
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          script {
-            echo "Aguardando resultado do workflow '$WORKFLOW_NAME' na branch '$BRANCH'..."
+        script {
+          lastRunId = sh(
+            script: '''
+              curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/runs?branch=$BRANCH&per_page=1" \
+                | jq -r '.workflow_runs[0].id'
+            ''',
+            returnStdout: true
+          ).trim()
+          echo "Último run antes do dispatch = ${lastRunId}"
+        }
+      }
+    }
 
-            def workflowRunId = ''
-            def conclusion = ''
-            def status = ''
-            def maxRetries = 30
-            def retryCount = 0
+    stage('3. Disparar GitHub Actions') {
+      steps {
+        sh '''
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/dispatches \
+            -d '{"ref":"'"$BRANCH"'"}'
+        '''
+      }
+    }
 
-            while (retryCount < maxRetries) {
-              def output = sh(
-                script: '''
-                  curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?branch=$BRANCH" \
-                    | jq -r '.workflow_runs[] | select(.name=="'"$WORKFLOW_NAME"'") | [.id, .status, .conclusion] | @tsv' \
-                    | head -n 1
-                ''',
-                returnStdout: true
-              ).trim()
+    stage('4. Aguardar o novo run completar') {
+      steps {
+        script {
+          def maxRetries = 30
+          def retryCount = 0
+          def newRunId = ''
+          def status   = ''
+          def conclusion = ''
 
-              if (output) {
-                def parts = output.split('\t')
-                if (parts.length == 3) {
-                  workflowRunId = parts[0]
-                  status = parts[1]
-                  conclusion = parts[2]
+          echo "Aguardando o run **novo** do workflow '${WORKFLOW_NAME}'..."
 
-                  echo "Status: $status | Conclusão: $conclusion"
+          while (retryCount < maxRetries) {
+            // busca o run mais recente
+            def output = sh(
+              script: """
+                curl -s -H "Authorization: token \$GITHUB_TOKEN" \
+                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\${workflowId}/runs?branch=\$BRANCH&per_page=1" \
+                  | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv'
+              """,
+              returnStdout: true
+            ).trim()
 
-                  if (status == 'completed') {
-                    break
-                  }
+            if (output) {
+              def parts = output.split('\\t')
+              newRunId   = parts[0]
+              status     = parts[1]
+              conclusion = parts[2] ?: ''
+
+              // só passa adiante quando for o run disparado agora
+              if (newRunId != lastRunId) {
+                echo "Found run ${newRunId}: status=${status}, conclusion=${conclusion}"
+                if (status == 'completed') {
+                  break
                 }
+              } else {
+                echo "Run ainda não mudou (continua ${newRunId}), aguardando..."
               }
-
-              sleep(time: 10, unit: 'SECONDS')
-              retryCount++
             }
 
-            if (conclusion == 'success') {
-              echo "GitHub Actions finalizou com sucesso."
-            } else {
-              error("GitHub Actions falhou ou foi cancelado. Conclusão: ${conclusion}")
-            }
+            sleep(time: 10, unit: 'SECONDS')
+            retryCount++
+          }
+
+          if (status == 'completed' && conclusion == 'success') {
+            echo "✅ GitHub Actions finalizou com sucesso (run ${newRunId})"
+          } else {
+            error "❌ Workflow falhou ou não concluiu: status=${status}, conclusion=${conclusion}"
           }
         }
       }
