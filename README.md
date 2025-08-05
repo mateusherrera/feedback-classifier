@@ -325,14 +325,27 @@ PYTHONPATH=flask dotenv run -- python -m app.evals --all
 
 ### Testes automatizados de EVALs
 
-Sobre as métricas mínimas definidas no Github Actions, o CI não passara caso os valores sejam:
+Sobre as métricas mínimas definidas no GitHub Actions, o CI não passará caso os valores fiquem abaixo dos thresholds:
 
-TODO: Adicionar tabela de valores
+| Categoria   | Recall Mínimo | Precisão Mínima | F1-Score Mínimo |
+|-------------|---------------|-----------------|-----------------|
+| ELOGIO      | 0.60          | 0.60            | 0.60            |
+| CRÍTICA     | 0.65          | 0.65            | 0.65            |
+| SUGESTÃO    | 0.50          | 0.70            | 0.70            |
+| DÚVIDA      | 0.65          | 0.65            | 0.65            |
+| SPAM        | 0.80          | 0.80            | 0.80            |
+
+Sobre as decisões de valores:
+
+* **Elogio**: Para elogio escolhi deixar um valor mais baixo para os thresholds, uma vez que não há identificações de melhorias, concertos, etc.
+* **Crítica**: É um feedback que pode ou não ser interessante para identificação de pontos de atenção para o sistema.
+* **Sugestão**: Categorita importante para identificação de melhorias de UX no sistema deve ser identificadas com mais precisão e recall.
+* **Dúvida**: Podem ser interessante para identificação de pontos de interesse no UX do sistema, semelhante a **Crítica**.
+* **Spam**: É muito importante identificar esses comentários, pois podem afetar na analise de insights e levantamentos importantes para analise do sistema.
 
 ## Endpoints
 
 Em `docs/postman-collection/` há o arquivo `Flask - LLM API.postman_collection.json` que pode ser importado no, idalmente, no Postman ou no Insomnia, para carregar os endpoits no seu cliet de preferência.
-
 
 ### Lista de Endpoints:
 

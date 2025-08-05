@@ -16,11 +16,11 @@ Config.LLM_MODEL      = os.getenv('LLM_MODEL')
 
 
 MIN_VALUES_CATEGORIES = {
-    'ELOGIO':   { 'min_recall': 0.10, 'min_precision': 0.10, 'min_f1': 0.10 },
-    'CRÍTICA':  { 'min_recall': 0.15, 'min_precision': 0.15, 'min_f1': 0.15 },
-    'SUGESTÃO': { 'min_recall': 0.10, 'min_precision': 0.10, 'min_f1': 0.10 },
-    'DÚVIDA':   { 'min_recall': 0.10, 'min_precision': 0.10, 'min_f1': 0.10 },
-    'SPAM':     { 'min_recall': 0.10, 'min_precision': 0.10, 'min_f1': 0.10 },
+    'ELOGIO':   { 'min_recall': 0.60, 'min_precision': 0.60, 'min_f1': 0.60 },
+    'CRÍTICA':  { 'min_recall': 0.65, 'min_precision': 0.65, 'min_f1': 0.65 },
+    'SUGESTÃO': { 'min_recall': 0.50, 'min_precision': 0.70, 'min_f1': 0.70 },
+    'DÚVIDA':   { 'min_recall': 0.65, 'min_precision': 0.65, 'min_f1': 0.65 },
+    'SPAM':     { 'min_recall': 0.80, 'min_precision': 0.80, 'min_f1': 0.80 },
 }
 
 
@@ -61,3 +61,9 @@ def test_eval_cli_success_with_all_and_min_recall(capsys):
 
     assert code == 0, f"esperava exit=0 mas foi {code!r}"
     assert "=== Classification Report ===" in out
+    
+    # Verificar mensagens de sucesso para cada categoria
+    for cat in CATEGORIES:
+        assert f"[✓] Recall {cat}" in out, f"Recall para {cat} falhou ou não encontrado"
+        assert f"[✓] Precisão {cat}" in out, f"Precisão para {cat} falhou ou não encontrado"
+        assert f"[✓] F1 {cat}" in out, f"F1 para {cat} falhou ou não encontrado"
