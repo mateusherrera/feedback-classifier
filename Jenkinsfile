@@ -1,109 +1,74 @@
 pipeline {
   agent any
-
   environment {
-    REPO_OWNER     = 'mateusherrera'
-    REPO_NAME      = 'feedback-classifier'
-    BRANCH         = 'main'
-    WORKFLOW_NAME  = 'CI - Pytest'
-
-    // carrega o token como variável de ambiente em todo o pipeline
-    GITHUB_TOKEN   = credentials('github-token')
+    REPO_OWNER    = 'mateusherrera'
+    REPO_NAME     = 'feedback-classifier'
+    BRANCH        = 'main'
+    WORKFLOW_NAME = 'CI - Pytest'
+    GITHUB_TOKEN  = credentials('github-token')
   }
 
   stages {
-    stage('1. Obter workflow ID') {
+    stage('Dispatch & Wait') {
       steps {
         script {
-          env.WORKFLOW_ID = sh(
-            script: '''
-              curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                   -H "Accept: application/vnd.github.v3+json" \
-                   https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows \
-                | jq -r '.workflows[] | select(.name=="'"$WORKFLOW_NAME"'") | .id'
-            ''',
-            returnStdout: true
-          ).trim()
-          echo "Workflow ID = ${WORKFLOW_ID}"
-        }
-      }
-    }
+          // 1) Captura workflow ID
+          def workflowId = sh(script: """
+            curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+                 -H "Accept: application/vnd.github.v3+json" \\
+                 https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows \\
+              | jq -r '.workflows[] | select(.name=="${WORKFLOW_NAME}") | .id'
+          """, returnStdout: true).trim()
 
-    stage('2. Capture último run antes do dispatch') {
-      steps {
-        script {
-          env.LAST_RUN_ID = sh(
-            script: '''
-              curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${WORKFLOW_ID}/runs?branch=$BRANCH&per_page=1" \
-                | jq -r '.workflow_runs[0].id'
-            ''',
-            returnStdout: true
-          ).trim()
-          echo "Último run antes do dispatch = ${LAST_RUN_ID}"
-        }
-      }
-    }
+          // 2) Captura último run antes do dispatch
+          def lastRunId = sh(script: """
+            curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+                 "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/runs?branch=$BRANCH&per_page=1" \\
+              | jq -r '.workflow_runs[0].id // empty'
+          """, returnStdout: true).trim()
 
-    stage('3. Disparar GitHub Actions') {
-      steps {
-        sh '''
-          curl -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${WORKFLOW_ID}/dispatches \
-            -d '{"ref":"'"$BRANCH"'"}'
-        '''
-      }
-    }
+          echo "Workflow ID = ${workflowId}, LastRun = ${lastRunId ?: 'nenhum'}"
 
-    stage('4. Aguardar o novo run completar') {
-      steps {
-        script {
-          def maxRetries = 30
-          def retryCount = 0
+          // 3) Dispara o workflow
+          sh """
+            curl -X POST \\
+              -H "Authorization: token $GITHUB_TOKEN" \\
+              -H "Accept: application/vnd.github.v3+json" \\
+              https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/dispatches \\
+              -d '{"ref":"${BRANCH}"}'
+          """
+
+          // 4) Polling até encontrar um novo run concluído
           def newRunId = ''
           def status   = ''
           def conclusion = ''
 
-          echo "Aguardando o run novo do workflow '${WORKFLOW_NAME}'..."
+          for (int i = 0; i < 30; i++) {
+            def out = sh(script: """
+              curl -s -H "Authorization: token $GITHUB_TOKEN" \\
+                "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/runs?branch=$BRANCH&per_page=1" \\
+                | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv'
+            """, returnStdout: true).trim()
 
-          while (retryCount < maxRetries) {
-            // busca o run mais recente
-            def output = sh(
-              script: """
-                curl -s -H "Authorization: token \$GITHUB_TOKEN" \
-                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\${WORKFLOW_ID}/runs?branch=\$BRANCH&per_page=1" \
-                  | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv'
-              """,
-              returnStdout: true
-            ).trim()
+            def parts = out.tokenize('\\t')
+            newRunId   = parts[0]
+            status     = parts[1]
+            conclusion = parts[2] ?: ''
 
-            if (output) {
-              def parts = output.split('\\t')
-              newRunId   = parts[0]
-              status     = parts[1]
-              conclusion = parts[2] ?: ''
-
-              // só passa adiante quando for o run disparado agora
-              if (newRunId != ${LAST_RUN_ID}) {
-                echo "Found run ${newRunId}: status=${status}, conclusion=${conclusion}"
-                if (status == 'completed') {
-                  break
-                }
-              } else {
-                echo "Run ainda não mudou (continua ${newRunId}), aguardando..."
-              }
+            if (newRunId != lastRunId && status == 'completed') {
+              echo "→ Encontrei run ${newRunId}: status=${status}, conclusion=${conclusion}"
+              break
             }
 
-            sleep(time: 10, unit: 'SECONDS')
-            retryCount++
+            echo "→ Aguardando novo run (ainda ${newRunId})"
+            sleep time: 10, unit: 'SECONDS'
           }
 
+          // 5) Validar sucesso/falha
           if (status == 'completed' && conclusion == 'success') {
-            echo "✅ GitHub Actions finalizou com sucesso (run ${newRunId})"
+            echo "✅ Workflow finalizado com sucesso (run ${newRunId})"
           } else {
-            error "❌ Workflow falhou ou não concluiu: status=${status}, conclusion=${conclusion}"
+            error("❌ Workflow falhou ou não concluiu: status=${status}, conclusion=${conclusion}")
           }
         }
       }
