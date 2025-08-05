@@ -73,17 +73,16 @@ pipeline {
               // 4) Aguardar e monitorar execução
               echo "⏳ Waiting for workflow to start and complete..."
               
-              def maxAttempts = 60  // 10 minutos total
+              def maxAttempts = 60
               def newRunId = null
               def finalStatus = null
               def finalConclusion = null
               def found = false
 
-              sleep time: 10, unit: 'SECONDS'  // Aguarda workflow aparecer
+              sleep time: 10, unit: 'SECONDS'
 
               for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
-                  // Parse usando jq para obter id|status|conclusion
                   def runInfo = sh(
                     returnStdout: true,
                     script: """
