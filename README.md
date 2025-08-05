@@ -16,7 +16,7 @@ Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, 
 - [Como Rodar o Projeto](#como-rodar-o-projeto)
 - [Testes e Métricas (EVALs)](#testes-e-métricas-evals)
 - [CI/CD](#cicd)
-- [Painel e Relatórios](#painel-e-relatórios)
+- [Painel e Relatórios](#painel-e-relátorios)
 - [Resumo por E-mail](#resumo-por-e-mail)
 - [Extra: Insights](#extra-insights)
 
