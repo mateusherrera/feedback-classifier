@@ -18,14 +18,14 @@ pipeline {
               echo "🔍 Searching for workflow '${WORKFLOW_NAME}'..."
               
               def workflowId = sh(
-                script: [
-                  'curl', '-s',
-                  '-H', "Authorization: Bearer ${GITHUB_TOKEN}",
-                  '-H', 'Accept: application/vnd.github.v3+json',
-                  "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows",
-                  '|', 'jq', '-r', ".workflows[] | select(.name==\"${WORKFLOW_NAME}\") | .id"
-                ].join(' '),
-                returnStdout: true
+                returnStdout: true,
+                script: '''
+                  curl -s \
+                    -H "Authorization: Bearer $GITHUB_TOKEN" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows" \
+                    | jq -r ".workflows[] | select(.name==\\"$WORKFLOW_NAME\\") | .id"
+                '''
               ).trim()
               if (!workflowId || workflowId == 'null' || workflowId == '') {
                 error "❌ Workflow '${WORKFLOW_NAME}' not found in repository"
@@ -37,14 +37,14 @@ pipeline {
               echo "📋 Getting latest run ID..."
               
               def lastRunId = sh(
-                script: [
-                  'curl', '-s',
-                  '-H', "Authorization: Bearer ${GITHUB_TOKEN}",
-                  '-H', 'Accept: application/vnd.github.v3+json',
-                  "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
-                  '|', 'jq', '-r', '.workflow_runs[0].id // "none"'
-                ].join(' '),
-                returnStdout: true
+                returnStdout: true,
+                script: '''
+                  curl -s \
+                    -H "Authorization: Bearer $GITHUB_TOKEN" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$workflowId/runs?branch=$BRANCH&per_page=1" \
+                    | jq -r ".workflow_runs[0].id // \\"none\\""
+                '''
               ).trim()
               
               echo "Last run ID: ${lastRunId}"
@@ -53,15 +53,15 @@ pipeline {
               echo "🚀 Dispatching workflow..."
               
               def dispatchResult = sh(
-                script: [
-                  'curl', '-s', '-X', 'POST',
-                  '-H', "Authorization: Bearer ${GITHUB_TOKEN}",
-                  '-H', 'Accept: application/vnd.github.v3+json',
-                  '-H', 'Content-Type: application/json',
-                  '-d', "{\"ref\":\"${BRANCH}\"}",
-                  "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/dispatches"
-                ].join(' '),
-                returnStatus: true
+                returnStatus: true,
+                script: '''
+                  curl -s -X POST \
+                    -H "Authorization: Bearer $GITHUB_TOKEN" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    -H "Content-Type: application/json" \
+                    -d "{\\"ref\\":\\"$BRANCH\\"}" \
+                    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$workflowId/dispatches"
+                '''
               )
 
               if (dispatchResult != 0) {
@@ -85,14 +85,14 @@ pipeline {
                 try {
                   // Parse usando jq para obter id|status|conclusion
                   def runInfo = sh(
-                    script: [
-                      'curl', '-s',
-                      '-H', "Authorization: Bearer ${GITHUB_TOKEN}",
-                      '-H', 'Accept: application/vnd.github.v3+json',
-                      "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
-                      '|', 'jq', '-r', '.workflow_runs[0] | if . != null then "\\(.id)|\\(.status)|\\(.conclusion // "null")" else "empty" end'
-                    ].join(' '),
-                    returnStdout: true
+                    returnStdout: true,
+                    script: '''
+                      curl -s \
+                        -H "Authorization: Bearer $GITHUB_TOKEN" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$workflowId/runs?branch=$BRANCH&per_page=1" \
+                        | jq -r ".workflow_runs[0] | if . != null then \\"\\(.id)|\\(.status)|\\(.conclusion // \\\\"null\\\\")\\\" else \\"empty\\" end"
+                    '''
                   ).trim()
                   
                   if (runInfo == 'empty' || runInfo == 'null') {
