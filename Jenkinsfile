@@ -91,7 +91,7 @@ pipeline {
                         -H "Authorization: Bearer \$GITHUB_TOKEN" \\
                         -H "Accept: application/vnd.github.v3+json" \\
                         "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1" \\
-                        | jq -r ".workflow_runs[0] | if . != null then \\"\\(.id)|\\(.status)|\\(.conclusion // \\\\"null\\\\")\\\" else \\"empty\\" end"
+                        | jq -r '.workflow_runs[0] | if . != null then "\\(.id)|\\(.status)|\\(.conclusion // \\"null\\")" else "empty" end'
                     """
                   ).trim()
                   
