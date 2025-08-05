@@ -1,6 +1,3 @@
-def workflowId = ''
-def lastRunId = ''
-
 pipeline {
   agent any
 
@@ -18,7 +15,7 @@ pipeline {
     stage('1. Obter workflow ID') {
       steps {
         script {
-          workflowId = sh(
+          env.WORKFLOW_ID = sh(
             script: '''
               curl -s -H "Authorization: token $GITHUB_TOKEN" \
                    -H "Accept: application/vnd.github.v3+json" \
@@ -27,7 +24,7 @@ pipeline {
             ''',
             returnStdout: true
           ).trim()
-          echo "Workflow ID = ${workflowId}"
+          echo "Workflow ID = $WORKFLOW_ID"
         }
       }
     }
@@ -35,15 +32,15 @@ pipeline {
     stage('2. Capture último run antes do dispatch') {
       steps {
         script {
-          lastRunId = sh(
+          env.LAST_RUN_ID = sh(
             script: '''
               curl -s -H "Authorization: token $GITHUB_TOKEN" \
-                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/runs?branch=$BRANCH&per_page=1" \
+                   "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/runs?branch=$BRANCH&per_page=1" \
                 | jq -r '.workflow_runs[0].id'
             ''',
             returnStdout: true
           ).trim()
-          echo "Último run antes do dispatch = ${lastRunId}"
+          echo "Último run antes do dispatch = $LAST_RUN_ID"
         }
       }
     }
@@ -54,7 +51,7 @@ pipeline {
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/${workflowId}/dispatches \
+            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_ID/dispatches \
             -d '{"ref":"'"$BRANCH"'"}'
         '''
       }
@@ -69,14 +66,14 @@ pipeline {
           def status   = ''
           def conclusion = ''
 
-          echo "Aguardando o run **novo** do workflow '${WORKFLOW_NAME}'..."
+          echo "Aguardando o run novo do workflow '${WORKFLOW_NAME}'..."
 
           while (retryCount < maxRetries) {
             // busca o run mais recente
             def output = sh(
               script: """
                 curl -s -H "Authorization: token \$GITHUB_TOKEN" \
-                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\${workflowId}/runs?branch=\$BRANCH&per_page=1" \
+                  "https://api.github.com/repos/\$REPO_OWNER/\$REPO_NAME/actions/workflows/\$WORKFLOW_ID/runs?branch=\$BRANCH&per_page=1" \
                   | jq -r '.workflow_runs[0] | [.id, .status, .conclusion] | @tsv'
               """,
               returnStdout: true
@@ -89,7 +86,7 @@ pipeline {
               conclusion = parts[2] ?: ''
 
               // só passa adiante quando for o run disparado agora
-              if (newRunId != lastRunId) {
+              if (newRunId != $LAST_RUN_ID) {
                 echo "Found run ${newRunId}: status=${status}, conclusion=${conclusion}"
                 if (status == 'completed') {
                   break
