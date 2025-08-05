@@ -12,7 +12,7 @@ Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, 
 
 - [Ferramentas Utilizadas](#ferramentas-utilizadas)
 - [Descrição do Projeto](#descrição-do-projeto)
-- [Documentações](#documentações)
+- [Documentação](#documentação)
 - [Como Rodar o Projeto](#como-rodar-o-projeto)
 - [Testes e Métricas (EVALs)](#testes-e-métricas-evals)
 - [CI/CD](#cicd)
