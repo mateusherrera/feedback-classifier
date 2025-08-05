@@ -17,21 +17,13 @@ pipeline {
               // 1) Buscar workflow ID
               echo "🔍 Searching for workflow '${WORKFLOW_NAME}'..."
               
-              def workflowsResponse = httpRequest(
-                httpMode: 'GET',
-                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows",
-                customHeaders: [
-                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
-                  [name: 'Accept', value: 'application/vnd.github.v3+json']
-                ],
-                consoleLogResponseBody: false
-              )
-
-              // Parse JSON usando groovy nativo
               def workflowId = sh(
                 returnStdout: true,
                 script: """
-                  echo '${workflowsResponse.content}' | jq -r '.workflows[] | select(.name=="${WORKFLOW_NAME}") | .id'
+                  curl -s -f -H "Authorization: Bearer ${GITHUB_TOKEN}" \\
+                       -H "Accept: application/vnd.github.v3+json" \\
+                       "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows" \\
+                       | jq -r '.workflows[] | select(.name=="${WORKFLOW_NAME}") | .id'
                 """
               ).trim()
               if (!workflowId || workflowId == 'null' || workflowId == '') {
@@ -43,20 +35,13 @@ pipeline {
               // 2) Obter último run ID antes do dispatch
               echo "📋 Getting latest run ID..."
               
-              def runsResponse = httpRequest(
-                httpMode: 'GET',
-                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
-                customHeaders: [
-                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
-                  [name: 'Accept', value: 'application/vnd.github.v3+json']
-                ],
-                consoleLogResponseBody: false
-              )
-
               def lastRunId = sh(
                 returnStdout: true,
                 script: """
-                  echo '${runsResponse.content}' | jq -r '.workflow_runs[0].id // "none"'
+                  curl -s -f -H "Authorization: Bearer ${GITHUB_TOKEN}" \\
+                       -H "Accept: application/vnd.github.v3+json" \\
+                       "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1" \\
+                       | jq -r '.workflow_runs[0].id // "none"'
                 """
               ).trim()
               
@@ -65,20 +50,20 @@ pipeline {
               // 3) Disparar workflow
               echo "🚀 Dispatching workflow..."
               
-              def dispatchResponse = httpRequest(
-                httpMode: 'POST',
-                url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/dispatches",
-                customHeaders: [
-                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
-                  [name: 'Accept', value: 'application/vnd.github.v3+json'],
-                  [name: 'Content-Type', value: 'application/json']
-                ],
-                requestBody: """{"ref":"${BRANCH}"}""",
-                consoleLogResponseBody: false
+              def dispatchResult = sh(
+                returnStatus: true,
+                script: """
+                  curl -s -f -X POST \\
+                       -H "Authorization: Bearer ${GITHUB_TOKEN}" \\
+                       -H "Accept: application/vnd.github.v3+json" \\
+                       -H "Content-Type: application/json" \\
+                       -d '{"ref":"${BRANCH}"}' \\
+                       "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/dispatches"
+                """
               )
 
-              if (dispatchResponse.status != 204) {
-                error "❌ Failed to dispatch workflow. Status: ${dispatchResponse.status}"
+              if (dispatchResult != 0) {
+                error "❌ Failed to dispatch workflow"
               }
               
               echo "✅ Workflow dispatched successfully"
@@ -96,21 +81,14 @@ pipeline {
 
               for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
-                  def currentRunsResponse = httpRequest(
-                    httpMode: 'GET',
-                    url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
-                    customHeaders: [
-                      [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
-                      [name: 'Accept', value: 'application/vnd.github.v3+json']
-                    ],
-                    consoleLogResponseBody: false
-                  )
-
                   // Parse usando jq para obter id|status|conclusion
                   def runInfo = sh(
                     returnStdout: true,
                     script: """
-                      echo '${currentRunsResponse.content}' | jq -r '.workflow_runs[0] | if . != null then "\\(.id)|\\(.status)|\\(.conclusion // "null")" else "empty" end'
+                      curl -s -f -H "Authorization: Bearer ${GITHUB_TOKEN}" \\
+                           -H "Accept: application/vnd.github.v3+json" \\
+                           "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1" \\
+                           | jq -r '.workflow_runs[0] | if . != null then "\\(.id)|\\(.status)|\\(.conclusion // "null")" else "empty" end'
                     """
                   ).trim()
                   
