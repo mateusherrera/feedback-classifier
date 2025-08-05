@@ -19,7 +19,7 @@ openai = OpenAI(api_key=Config.OPENAI_API_KEY)
 LLM_MODEL = Config.LLM_MODEL
 
 
-def gerar_insight(pergunta: str, num_resumos: int = 3, max_palavras: int = 150):
+def gerar_insight(pergunta: str, num_resumos: int = 8, max_palavras: int = 150):
     """
     Gera um insight a partir dos últimos resumos semanais.
 
@@ -35,8 +35,8 @@ def gerar_insight(pergunta: str, num_resumos: int = 3, max_palavras: int = 150):
     except Exception as e:
         return f'Erro ao buscar resumos semanais: {str(e)}', 500
 
-    if resumos is None or len(resumos) == 0:
-        return 'Não há resumos semanais disponíveis para gerar insights.', 404
+    if resumos is None or len(resumos) < 3:
+        return 'Não há resumos semanais disponíveis suficientes para gerar insights.', 404
 
     # Montar contexto e extrair identificador de semana
     contextos = list()
