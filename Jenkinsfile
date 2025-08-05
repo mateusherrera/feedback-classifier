@@ -11,7 +11,7 @@ pipeline {
   stages {
     stage('Dispatch GitHub Actions Workflow') {
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+        withCredentials([secretText(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
           script {
             try {
               // 1) Buscar workflow ID
