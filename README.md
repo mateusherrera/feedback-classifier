@@ -135,7 +135,164 @@ Nesta pasta, estão todos os testes automaticos do Flask. Nele serão definidos 
 
 ## Como executar o Projeto
 
+Nessa seção será listado o passo-a-passo para executar o projeto utilizando Docker.
 
+### Requisitos:
+
+* Python 3.10+
+* Git
+* Linux ou WSL2 (Para instalar WSL2 no Windows, caso seja o caso você [pode seguir esse tutorial](https://medium.com/@habbema/desvendando-o-wsl-2-no-windows-11-c7649545026d))
+* Docker Desktop no Windows integrado com WSL2, caso necessário[utilize o tutorial oficial](https://docs.docker.com/desktop/features/wsl/)
+
+### Clone o repositório
+
+Clone o repositório e entre na pasta:
+
+```sh
+git clone https://github.com/mateusherrera/feedback-classifier.git
+cd feedback-classifier
+```
+
+### Variáveis de ambiente
+
+O primeiro passo é definir as variáveis de ambiente.
+Na pasta raiz do repostório há o template, para preencher com seus valores faça:
+
+```sh
+cp .env.template .env
+```
+
+Em seguida preenchar os valores adequados. Para isso, pode fazer pelo deu editor preferido, ou pelo terminal com `nano .env`.
+
+Abaixo seguem as descrições da cada variáveis que deve ser fornecida para o projeto:
+
+> Os itens marcados com '**' precisam ser preenchidos. Ou seja, não podem ser usados com valor default
+
+* Variáveis para o Flask:
+    * ``FLASK_APP``: Caminho para o módulo para app flask, caso não tenha alteração na estrutura do projeto, pode ser deixada como valor default: `app.main:app`.
+    * ``FLASK_ENV``: Indica se o flask será rodado em `production`, `development` ou `testing`. Em execução local pode ser deixado como `development`.
+    * ** ``SECRET_KEY``: Chave aleatória gerada para utilização do Flask App, para gera pode seguir [esses passos](#para-gerar-as-chaves-aleatórias)
+* ** ``OPENAI_API_KEY``: Chave válida para utilização da API da OpenAI. Pode ser gera na [plataforma oficial da OpenAi](https://platform.openai.com)
+* ** ``JWT_SECRET_KEY``: Chave aleatória para utilização nos métodos do JWT. Pode ser gerada seguindo o mesmo método da SECRET_KEY do Flask, [aqui](#para-gerar-as-chaves-aleatórias).
+* Variáveis de Banco de Dados:
+    * ``SQLALCHEMY_DATABASE_URI``: Conn string para conexão com o banco a ser utilizado pelo Flask. Exemplo: `postgresql://usuario:senha@host:5432/nome_do_banco`. PS.: para utilizar o banco gerado pelo Docker, host será o mesmo nome do container, no caso `db`.
+        > Importante: A connstring será usada para conexão. As variáveis abaixo são apenas para criação do banco com o docker compose.
+        > Então caso queira conectar a um banco proprio, pode preencher apenas a connstring com as suas configurações, e as debaixo podem ser ignoradas. Para esse último caso, não suba o serviço db, quando fazer o build dos containers.
+    * ``POSTGRES_DB``: Nome do Banco de Dados que será gerado pelo docker ao fazer o build do PostgreSQL.
+    * ``POSTGRES_HOST``: Host do Banco de Dados que será gerado pelo docker ao fazer o build do PostgreSQL. De acordo com a estrutura do `docker-compose.yml` o valor deve ser o nome do service, no caso `db`.
+    * ``POSTGRES_PORT``: Número da porta para conexão com o Banco de Dados.
+    * ``POSTGRES_USER``: Usuário admin que será gerado no build do container.
+    * ``POSTGRES_PASSWORD``: Senha para o usuário admin.
+    * ``PGDATA_PATH``: Caminho local para armazenamento dos dados do banco de dados. Pode ser o default: `/var/lib/postgresql/data`. Tenha em mente que ela precisa existir e a permissão deve ser concedida para o docker: `sudo mkdir /var/lib/postgresql/data` e `sudo chown -R 999:999 /var/lib/postgresql/data/`.
+* Variáveis para configuração do Redis (Cache):
+    * ``CACHE_TYPE``: Tipo de cache a ser utilizado para o cache. Pode ser deixado o valor default: `RedisCache`, para utilização do Redis.
+    * ``CACHE_REDIS_HOST``: Host para o redis, segue a lógica do postgres, usando o Docker, deixe o nome do service: `redis`.
+    * ``CACHE_REDIS_PORT``: Número da porta para conexão com o redis.
+    * ``CACHE_REDIS_DB``: Indice do Banco de Dados, pode ser deixado em default: `0`.
+    * ``CACHE_DEFAULT_TIMEOUT``: Timeout padrão para o redis, pode ser deixado também com valor default: `60`.
+* Variávies para configuração de envio de e-mail automáticos:
+    > Se usar Gmail, MAIL_SERVER e MAIL_PORT podem ser deixados default.
+    * ** ``MAIL_SERVER``: Servidor de STMP do e-mail que será utilizado para envio automático de resumo semanal.
+    * ** ``MAIL_PORT``: Porta para o servidor STMP do e-mail que será utilizado para envio automático de resumo semanal.
+    * ** ``MAIL_USERNAME``: Usuário de e-mail que será utilizado para envio automático de resumo semanal.
+    * ** ``MAIL_PASSWORD``: Senha de app do e-mail que será utilizado para envio automático de resumo semanal. No caso do GMail, pode ser [esse documento](https://support.google.com/accounts/answer/185833?hl=pt-BR) para gerar a senha de app.
+    * ** ``MAIL_DEFAULT_SENDER``: E-mail remetente da mensagem, pode ser o mesmo que o USERNAME.
+    * ** ``STAKEHOLDERS_EMAILS``: E-mail que receberão o resumo semanal separados por `,` (vírgula), por exemplo: `example1@mail.com,example1@mail.com`
+    * ``CELERY_BROKER_URL``: Connstring para redis, por exemplo `redis://host_redis:porta_redis/numero_db_redis`. Lembrando que assim como no postges, o host é o nome do serviço no Docker, no caso `redis`.
+.* Nomes dos container, esse valores são os nomes dos containers de cada serviço, pode ser deixado o valor default:
+    * ``REDIS_CONTAINER_NAME``: Nome do container de Redis (`feedback-classifier_redis`).
+    * ``DB_CONTAINER_NAME``: Nome do container do PostgreSQl (`feedback-classifier_db`).
+    * ``API_CONTAINER_NAME``: Nome do container do Flask (`feedback-classifier_api`).
+    * ``NGINX_CONTAINER_NAME``: Nome do container do NGINX (`feedback-classifier_nginx`).
+
+#### Para gerar as chaves aleatórias
+
+Para gerar as chaves aleatórias use o interpretador do python com `python3` e rode:
+
+```python
+import secrets
+print(secrets.token_urlsafe(32))
+```
+
+> Importante: Usar chaves destintas para SECRET_KEY e JWT_SECRET_KEY
+
+### Docker Compose
+
+Com o `.env` devidamente criado e preenchido basta fazer o build do Docker, rodando:
+
+```sh
+docker compose up -d
+```
+
+Para verificar se tudo ocorreu bem rode:
+
+```sh
+docker ps
+```
+
+E a saida deve ser algo como:
+
+```sh
+CONTAINER ID   IMAGE                               COMMAND                  CREATED        STATUS             PORTS                                         NAMES
+252a2ca89c1e   feedback-classifier-nginx           "/docker-entrypoint.…"   46 hours ago   Up About an hour   0.0.0.0:443->443/tcp, [::]:443->443/tcp       feedback-classifier_nginx
+0c254b54dcf5   feedback-classifier-celery_worker   "celery -A app.tasks…"   46 hours ago   Up About an hour                                                 celery_worker
+a4cef3afbb0e   feedback-classifier-celery_beat     "celery -A app.tasks…"   46 hours ago   Up About an hour                                                 celery_beat
+f99f6fbe771e   feedback-classifier-api             "gunicorn -w 4 -b 0.…"   46 hours ago   Up About an hour   0/tcp                                         feedback-classifier_api
+a1ba3bd2e5ad   postgres:16                         "docker-entrypoint.s…"   2 days ago     Up About an hour   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp   feedback-classifier_db
+9d76af791392   redis:7                             "docker-entrypoint.s…"   2 days ago     Up About an hour   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp   feedback-classifier_redis
+```
+
+### Jenkins
+
+Caso queira, é possível é subir um Jenkins com o `docker-compose.yml` disponível em `jenkins/docker-compose.yml`. Basta rodar:
+
+```sh
+cd jenkins
+docker compose up -d
+```
+
+Se você optou por subir o jenkins do repositório, faça o seu primeiro acesso com a senha disponível com o comando abaixo, e crie o seu usuário de administrador.
+
+```sh
+docker compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+Feito isso, ou usando um Jekins proprio. Logado, faça as seguinte configurações para rodar os testes automáticos com Github Actions:
+
+1. Adicione seu Github Personal Access Token:
+
+    > Para esse caso, crie o token com repo e admin:repo_hook.
+
+    1. Acesse Manage Jenkins → Manage Credentials → selecione o store global.
+    2. Clique em Add Credentials e preencha:
+        * Kind: Secret text
+        * Secret: cole o seu GitHub Personal Access Token
+        * ID: github-token
+        * Description: “Token para acionar GitHub Actions”
+    3. Salve.
+
+2. Adicione suas credencias do Github:
+    1. Vá em Manage Jenkins → Manage Credentials → selecione o escopo (global).
+    2. Clique em Add Credentials e preencha:
+        * Kind: Username with password
+        * Username: seu usuário GitHub (ex.: mateusherrera)
+        * Password: seu GitHub Personal Access Token (o mesmo criado no passo 1)
+        * ID: github-credentials
+        * Description: “Credenciais GitHub (usuário + token)”
+    3. Salve.
+
+3. Crie o pipeline para o repositório
+    1. No dashboard do Jenkins, clique em “New Item” (ou “Novo Item”) no menu lateral.
+    2. Dê um nome ao job, por exemplo feedback-classifier-ci, selecione “Pipeline” e clique em OK.
+    3. Na tela de configuração do job:
+        1. Em Pipeline faça:
+            * Definition: selecione “Pipeline script from SCM”.
+            * SCM: escolha “Git”.
+            * Repository URL: https://github.com/mateusherrera/feedback-classifier.git ou repo de fork caso tenha feito.
+            * Credentials: selecione github-credentials.
+            * Branches to build: */main.
+            * Script Path: Jenkinsfile.
+    4. Clique em Save.
 
 ## Testes e Métricas (EVALs)
 
@@ -150,6 +307,8 @@ PYTHONPATH=flask dotenv run -- python -m app.evals --all
 ```
 
 ## CI/CD
+
+## Endpoints
 
 ## Painel e Relátorios
 
