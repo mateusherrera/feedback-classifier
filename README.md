@@ -1,8 +1,5 @@
 # AluMusic Feedback Classifier
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
-![Flask](https://img.shields.io/badge/flask-%3E%3D2.0-009688.svg)
-![PostgreSQL](https://img.shields.io/badge/postgresql-%3E%3D14-336791.svg)
-![Docker](https://img.shields.io/badge/docker-%3E%3D20.10-2496ED.svg)
 ![OpenAI API](https://img.shields.io/badge/OpenAI-API-brightgreen?logo=openai&logoColor=white)
 ![Model GPT‐3.5‐turbo](https://img.shields.io/badge/Model-gpt--3.5--turbo-blueviolet)
 ![License](https://img.shields.io/github/license/mateusherrera/feedback-classifier.svg)
