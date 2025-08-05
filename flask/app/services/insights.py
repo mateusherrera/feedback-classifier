@@ -30,7 +30,13 @@ def gerar_insight(pergunta: str, num_resumos: int = 3, max_palavras: int = 150):
     """
 
     # Buscar os resumos mais recentes
-    resumos = (ResumoSemanal.query.order_by(ResumoSemanal.created_at.desc()).limit(num_resumos).all())
+    try:
+        resumos = (ResumoSemanal.query.order_by(ResumoSemanal.created_at.desc()).limit(num_resumos).all())
+    except Exception as e:
+        return f'Erro ao buscar resumos semanais: {str(e)}', 500
+
+    if resumos is None or len(resumos) == 0:
+        return 'Não há resumos semanais disponíveis para gerar insights.', 404
 
     # Montar contexto e extrair identificador de semana
     contextos = list()

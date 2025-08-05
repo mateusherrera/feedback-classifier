@@ -31,6 +31,10 @@ class InsightPerguntar(Resource):
 
         # Gerar insight
         resposta, semanas = gerar_insight(pergunta)
+
+        if isinstance(semanas, int):
+            return { 'details': resposta }, semanas
+
         return {
             'resposta'  : resposta,
             'semanas'   : semanas

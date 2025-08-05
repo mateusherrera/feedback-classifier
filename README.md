@@ -135,7 +135,19 @@ Nesta pasta, estão todos os testes automaticos do Flask. Nele serão definidos 
 
 ## Como executar o Projeto
 
+
+
 ## Testes e Métricas (EVALs)
+
+TESTE: 
+```sh
+PYTHONPATH=flask OPENAI_API_KEY=<token-openai> LLM_MODEL=gpt-3.5-turbo pytest -v
+```
+
+EVALs: 
+```sh
+PYTHONPATH=flask dotenv run -- python -m app.evals --all
+```
 
 ## CI/CD
 
