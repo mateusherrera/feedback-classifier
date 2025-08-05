@@ -21,20 +21,23 @@ pipeline {
                 httpMode: 'GET',
                 url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows",
                 customHeaders: [
-                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
                   [name: 'Accept', value: 'application/vnd.github.v3+json']
                 ],
                 consoleLogResponseBody: false
               )
 
-              def workflows = readJSON text: workflowsResponse.content
-              def targetWorkflow = workflows.workflows.find { it.name == WORKFLOW_NAME }
-              
-              if (!targetWorkflow) {
+              // Parse JSON usando groovy nativo
+              def workflowId = sh(
+                returnStdout: true,
+                script: """
+                  echo '${workflowsResponse.content}' | jq -r '.workflows[] | select(.name=="${WORKFLOW_NAME}") | .id'
+                """
+              ).trim()
+              if (!workflowId || workflowId == 'null' || workflowId == '') {
                 error "❌ Workflow '${WORKFLOW_NAME}' not found in repository"
               }
               
-              def workflowId = targetWorkflow.id
               echo "✅ Found workflow ID: ${workflowId}"
 
               // 2) Obter último run ID antes do dispatch
@@ -44,16 +47,20 @@ pipeline {
                 httpMode: 'GET',
                 url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
                 customHeaders: [
-                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
                   [name: 'Accept', value: 'application/vnd.github.v3+json']
                 ],
                 consoleLogResponseBody: false
               )
 
-              def runs = readJSON text: runsResponse.content
-              def lastRunId = runs.workflow_runs.size() > 0 ? runs.workflow_runs[0].id : null
+              def lastRunId = sh(
+                returnStdout: true,
+                script: """
+                  echo '${runsResponse.content}' | jq -r '.workflow_runs[0].id // "none"'
+                """
+              ).trim()
               
-              echo "Last run ID: ${lastRunId ?: 'none'}"
+              echo "Last run ID: ${lastRunId}"
 
               // 3) Disparar workflow
               echo "🚀 Dispatching workflow..."
@@ -62,7 +69,7 @@ pipeline {
                 httpMode: 'POST',
                 url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/dispatches",
                 customHeaders: [
-                  [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                  [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
                   [name: 'Accept', value: 'application/vnd.github.v3+json'],
                   [name: 'Content-Type', value: 'application/json']
                 ],
@@ -93,24 +100,36 @@ pipeline {
                     httpMode: 'GET',
                     url: "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowId}/runs?branch=${BRANCH}&per_page=1",
                     customHeaders: [
-                      [name: 'Authorization', value: "token ${GITHUB_TOKEN}"],
+                      [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
                       [name: 'Accept', value: 'application/vnd.github.v3+json']
                     ],
                     consoleLogResponseBody: false
                   )
 
-                  def currentRuns = readJSON text: currentRunsResponse.content
+                  // Parse usando jq para obter id|status|conclusion
+                  def runInfo = sh(
+                    returnStdout: true,
+                    script: """
+                      echo '${currentRunsResponse.content}' | jq -r '.workflow_runs[0] | if . != null then "\\(.id)|\\(.status)|\\(.conclusion // "null")" else "empty" end'
+                    """
+                  ).trim()
                   
-                  if (currentRuns.workflow_runs.size() == 0) {
+                  if (runInfo == 'empty' || runInfo == 'null') {
                     echo "→ Attempt ${attempt}/${maxAttempts}: No runs found yet"
                     sleep time: 10, unit: 'SECONDS'
                     continue
                   }
 
-                  def latestRun = currentRuns.workflow_runs[0]
-                  newRunId = latestRun.id
-                  finalStatus = latestRun.status
-                  finalConclusion = latestRun.conclusion
+                  def parts = runInfo.split('\\|')
+                  if (parts.length < 2) {
+                    echo "→ Attempt ${attempt}/${maxAttempts}: Invalid response format"
+                    sleep time: 10, unit: 'SECONDS'
+                    continue
+                  }
+
+                  newRunId = parts[0]
+                  finalStatus = parts[1]
+                  finalConclusion = parts.length > 2 ? parts[2] : 'null'
 
                   // Verificar se é um novo run
                   if (newRunId != lastRunId) {
