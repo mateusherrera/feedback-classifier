@@ -1,10 +1,15 @@
 # AluMusic Feedback Classifier
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+![Flask](https://img.shields.io/badge/flask-%3E%3D2.0-009688.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-%3E%3D14-336791.svg)
+![Docker](https://img.shields.io/badge/docker-%3E%3D20.10-2496ED.svg)
+![OpenAI API](https://img.shields.io/badge/OpenAI-API-brightgreen?logo=openai&logoColor=white)
+![Model GPT‐3.5‐turbo](https://img.shields.io/badge/Model-gpt--3.5--turbo-blueviolet)
+![License](https://img.shields.io/github/license/mateusherrera/feedback-classifier.svg)
 
-[![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&labelColor=11111b&color=B5E8E0&logoColor=e0e0e0)](https://www.python.org/)
+Foi desenvolvida uma API RESTful em Flask, integrada à API da OpenAI, para classificar automaticamente os comentários da plataforma AluMusic. O sistema foi projetado para escalar desde o início, com processamento paralelo em lote e autenticação via JWT, assegurando segurança e performance.
 
-Este projeto é uma API RESTful desenvolvida com Flask e integrada à API da OpenAI, com o objetivo de classificar automaticamente feedbacks textuais deixados por usuários da plataforma AluMusic. Ele permite a ingestão segura de comentários, classificação inteligente via LLM, análise de tendências e geração de relatórios semanais.
-
-O sistema foi construído com foco em paralelismo, autenticação via JWT, interface moderna para curadoria e painel público para insights em tempo real. Tudo isso orquestrado com Docker, Gunicorn, NGINX e CI/CD com Jenkins + GitHub Actions.
+Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, além de contar com uma pipeline de CI/CD orquestrada por Jenkins que aciona workflows no GitHub Actions, garantindo builds e testes automatizados.
 
 ## Sumário
 
@@ -12,25 +17,47 @@ O sistema foi construído com foco em paralelismo, autenticação via JWT, inter
 - [Descrição do Projeto](#descrição-do-projeto)
 - [Documentações](#documentações)
 - [Como Rodar o Projeto](#como-rodar-o-projeto)
-- [Testes e Métricas](#testes-e-métricas)
+- [Testes e Métricas (EVALs)](#testes-e-métricas-evals)
 - [CI/CD](#cicd)
 - [Painel e Relatórios](#painel-e-relatórios)
 - [Resumo por E-mail](#resumo-por-e-mail)
-- [Extra: Q&A Insights](#extra-qa-insights)
+- [Extra: Insights](#extra-insights)
 
 ## Ferramentas Utilizadas
 
-| Categoria      | Ferramenta                                                                               |
-|----------------|------------------------------------------------------------------------------------------|
-| Linguagem      | [Python 3.10+](https://www.python.org/)                                                  |
-| Framework Web  | [Flask RESTful](https://flask-restful.readthedocs.io/en/latest/)                         |
-| Banco de Dados | [PostgreSQL](https://www.postgresql.org/)                                                |
-| ORM            | [SQLAlchemy](https://www.sqlalchemy.org/)                                                |
-| Migrations     | [Flask-Migrate / Alembic](https://flask-migrate.readthedocs.io/)                         |
-| Auth           | [Flask-JWT-Extended](https://flask-jwt-extended.readthedocs.io/)                         |
-| LLM API        | [OpenAI](https://platform.openai.com/docs)                                               |
-| Servidor WSGI  | [Gunicorn](https://gunicorn.org/)                                                        |
-| Reverse Proxy  | [NGINX](https://nginx.org/en/docs/)                                                      |
-| Containers     | [Docker Compose](https://docs.docker.com/compose/)                                       |
-| CI/CD          | [Jenkins](https://www.jenkins.io/) + [GitHub Actions](https://docs.github.com/actions)   |
-| Testes         | [PyTest](https://docs.pytest.org/en/latest/)                                             |
+| Categoria             | Ferramenta                                                                               |
+|-----------------------|------------------------------------------------------------------------------------------|
+| Linguagem             | [Python 3.10+](https://www.python.org/)                                                  |
+| Web                   | [Flask](https://flask.palletsprojects.com/en/stable/#user-s-guide)                       |
+| API                   | [Flask-RESTful](https://flask-restful.readthedocs.io/en/latest/)                         |
+| Migrations            | [Flask-Migrate / Alembic](https://flask-migrate.readthedocs.io/)                         |
+| Auth                  | [Flask-JWT-Extended](https://flask-jwt-extended.readthedocs.io/)                         |
+| Banco de Dados        | [PostgreSQL](https://www.postgresql.org/)                                                |
+| ORM                   | [SQLAlchemy](https://www.sqlalchemy.org/)                                                |
+| LLM                   | [OpenAI](https://platform.openai.com/docs)                                               |
+| Cache / Broker        | [Redis](https://redis.io/)                                                               |
+| Tarefas Assíncronas   | [Celery](https://docs.celeryq.dev/en/stable/)                                            |
+| Agendamento de Tarefas| [Celery Beat](https://docs.celeryq.dev/en/stable/userguide/periodic-tasks.html)          |
+| Envio de E-mail       | [Flask-Mail](https://flask-mail.readthedocs.io/en/latest/)                               |
+| Servidor WSGI         | [Gunicorn](https://gunicorn.org/)                                                        |
+| Reverse Proxy         | [NGINX](https://nginx.org/en/docs/)                                                      |
+| Containers            | [Docker Compose](https://docs.docker.com/compose/)                                       |
+| CI/CD                 | [Jenkins](https://www.jenkins.io/) + [GitHub Actions](https://docs.github.com/actions)   |
+| Métricas & EVALs      | [scikit-learn](https://scikit-learn.org/stable/)                                         |
+| Testes                | [PyTest](https://docs.pytest.org/en/latest/)                                             |
+
+## Descrição do Projeto
+
+## Documentação
+
+## Como rodar o Projeto
+
+## Testes e Métricas (EVALs)
+
+## CI/CD
+
+## Painel e Relátorios
+
+## Resumo por E-mail
+
+## Extra: Insights
