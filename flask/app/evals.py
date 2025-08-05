@@ -172,17 +172,16 @@ def main():
     # Avaliação por categoria
     failed = False
     for cat in selected:
-        key = slugify(cat)
-        rec = recall_score(labels, preds, labels=[cat], average='macro', zero_division=0)
-        prec = precision_score(labels, preds, labels=[cat], average='macro', zero_division=0)
-        f1 = f1_score(labels, preds, average='macro', zero_division=0)
-
-        min_rec = getattr(args, f'{key}_min_recall')
-        max_rec = getattr(args, f'{key}_max_recall')
-        min_prec = getattr(args, f'{key}_min_precision')
-        max_prec = getattr(args, f'{key}_max_precision')
-        min_f1 = getattr(args, f'{key}_min_f1')
-        max_f1 = getattr(args, f'{key}_max_f1')
+        key         = slugify(cat)
+        rec         = recall_score(labels, preds, labels=[cat], average='macro', zero_division=0)
+        prec        = precision_score(labels, preds, labels=[cat], average='macro', zero_division=0)
+        f1          = f1_score(labels, preds, average='macro', zero_division=0)
+        min_rec     = getattr(args, f'{key}_min_recall')
+        max_rec     = getattr(args, f'{key}_max_recall')
+        min_prec    = getattr(args, f'{key}_min_precision')
+        max_prec    = getattr(args, f'{key}_max_precision')
+        min_f1      = getattr(args, f'{key}_min_f1')
+        max_f1      = getattr(args, f'{key}_max_f1')
 
         if not (min_rec <= rec <= max_rec):
             print(f"[✗] Recall {cat} {rec:.3f} não está em [{min_rec:.3f}, {max_rec:.3f}]")
