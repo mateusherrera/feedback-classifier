@@ -1,6 +1,9 @@
 pipeline {
   agent any
 
+  def workflowId = ''
+  def lastRunId = ''
+
   environment {
     REPO_OWNER     = 'mateusherrera'
     REPO_NAME      = 'feedback-classifier'
