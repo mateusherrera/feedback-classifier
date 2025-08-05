@@ -40,7 +40,9 @@ def create_app(config_class=Config) -> Flask:
 
     # Configuração do JWT
     app.config['JWT_SECRET_KEY']            = Config.JWT_SECRET_KEY
-    app.config['JWT_ACCESS_TOKEN_EXPIRES']  = timedelta(minutes=1)
+    # app.config['JWT_ACCESS_TOKEN_EXPIRES']  = timedelta(minutes=1)
+    # app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=1)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES']  = timedelta(days=1)
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=1)
 
     # Inicializa as extensões

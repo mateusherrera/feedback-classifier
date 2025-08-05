@@ -15,7 +15,7 @@ Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, 
 - [Documentação](#documentação)
 - [Como executar o Projeto](#como-executar-o-projeto)
 - [Testes e Métricas (EVALs)](#testes-e-métricas-evals)
-- [CI/CD](#cicd)
+- [Endpoints](#endpoints)
 - [Painel e Relatórios](#painel-e-relátorios)
 - [Resumo por E-mail](#resumo-por-e-mail)
 - [Extra: Insights](#extra-insights)
@@ -296,19 +296,64 @@ Feito isso, ou usando um Jekins proprio. Logado, faça as seguinte configuraçõ
 
 ## Testes e Métricas (EVALs)
 
-TESTE: 
+Para realizar testes locais rode o comando:
+
 ```sh
 PYTHONPATH=flask OPENAI_API_KEY=<token-openai> LLM_MODEL=gpt-3.5-turbo pytest -v
 ```
 
-EVALs: 
+Para realizar testes de EVALs rode o comando abaixo, para cálcular métricas de recall, precision e f1 de todas as categorias classificadas:
+
 ```sh
 PYTHONPATH=flask dotenv run -- python -m app.evals --all
 ```
 
-## CI/CD
+### Flags Disponíveis
+
+| Flag                            | Descrição                                                                 |
+|---------------------------------|---------------------------------------------------------------------------|
+| `-d, --data-csv PATH`           | Caminho para o CSV (default: `flask/data/test_comments.csv`)              |
+| `--all`                         | Avalia todas as categorias                                               |
+| `--<slug>`                      | Avalia somente a categoria cujo slug é `<slug>` (ex.: `--elogio`)         |
+| `--<slug>-min-recall FLOAT`     | Recall mínimo aceito em `<slug>`                                          |
+| `--<slug>-max-recall FLOAT`     | Recall máximo aceito em `<slug>`                                          |
+| `--<slug>-min-precision FLOAT`  | Precisão mínima aceita em `<slug>`                                        |
+| `--<slug>-max-precision FLOAT`  | Precisão máxima aceita em `<slug>`                                        |
+| `--<slug>-min-f1 FLOAT`         | F1 mínima aceita em `<slug>`                                              |
+| `--<slug>-max-f1 FLOAT`         | F1 máxima aceita em `<slug>`                                              |
+
+
+### Testes automatizados de EVALs
+
+Sobre as métricas mínimas definidas no Github Actions, o CI não passara caso os valores sejam:
+
+TODO: Adicionar tabela de valores
 
 ## Endpoints
+
+Em `docs/postman-collection/` há o arquivo `Flask - LLM API.postman_collection.json` que pode ser importado no, idalmente, no Postman ou no Insomnia, para carregar os endpoits no seu cliet de preferência.
+
+
+### Lista de Endpoints:
+
+> host: https://localhost/
+
+> Para testar os endpoints passe o access token em Authorization com Berear.
+
+> Exemplos de request e response, podem ser visto no collection do Postman.
+
+* Auth:
+    * POST `api/auth/register`: Endpoint para criar usuários.
+    * POST `api/auth/login`: Endpoint para fazer login, 
+    * POST `api/auth/refresh`: Endpoint para regerar um access token (vale por um minuto, em dev um dia), com refresh token (vale por um dia) válido.
+* Classificação de comentários:
+    * POST `api/comentarios`: Endpoint para classificar comentário com modelo LLM.
+    * GET `api/comentarios`: Listar todos os comentários classificados.
+    * GET `api/comentarios/export`: Exportar dados de comentários classificados em CSV.
+* Relatório Semanal:
+    * GET `api/relatorio/semana`: Retorna os dados (em JSON) cálculados para os dashboards.
+* Insights:
+    * POST `api/insights/perguntar`: Responde pergunta em linguagem natural com base nos últimos 8 relatórios semanais.
 
 ## Painel e Relátorios
 

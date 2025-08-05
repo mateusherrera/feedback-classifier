@@ -1,0 +1,332 @@
+{
+	"info": {
+		"_postman_id": "51620b30-0b7a-48d9-b8ca-5b0fdc798366",
+		"name": "Flask - LLM API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30439664"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"\",\r\n    \"password\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{REGISTER}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{REGISTER}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"\",\r\n    \"password\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{LOGIN}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{LOGIN}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"\",\r\n    \"password\": \"\"\r\n}"
+						},
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{REFRESH}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{REFRESH}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Classificação de Comentários",
+			"item": [
+				{
+					"name": "comment_classifier",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// Único comentário\r\n{\r\n    \"id\": \"{{$guid}}\",\r\n    \"texto\": \"\"\r\n}\r\n// Lote - 100 comentários\r\n// [\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Love this song…I remember this song and dancing around singing it, stereo as loud as it would go…\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"You claim this song is boring but I think what you are missing is a 'Mood' song. It might not have interesting melodies and chord changes but to Add these you would Subtract from the 'Mood.'\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quem aí tá vendo isso de 2025? Ainda por cima, essa música é atemporal!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Poxa, o volume dessa faixa está muito baixo, podiam normalizar melhor\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Mano, essa batida me faz querer dançar o tempo todo!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Por que essa música não está disponível em todos os países?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa faixa ficou excelente remixada, poderiam lançar mais versões assim\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Alguém sabe em que álbum original essa música está?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Primeiro!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Comercial 100% imersão sonora, baixe nosso app para mais!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"This looks like a commercial for Botox\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Fun facts: The word \\\"Key\\\" has been mentioned 90 times in this movie. Can't stop laughing.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"I didn't realise it was a movie... Completely lost in it ✨ A total masterpiece I'll say\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Mission impossible - Son of hunt 1 ????\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Rented yesterday, what a waste of $20. More low quality badly done car scenes since films were invented.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa batida arrepia demais, perfeito para treinar na academia!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"O solo de guitarra nessa parte é sensacional\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Podiam ter lançado a faixa completa ao invés desse snippet\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quando vai sair uma versão acústica?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Em loop infinito desde manhã, sensacional!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Por favor, lancem o clipe em 4K\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Alguém mais notou aquele sample de jazz no refrão?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"A voz da vocalista é de outro mundo\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"O mix está muito alto nos graves, quebra o fone\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Onde encontro a letra oficial da música?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Achei meio genérica, faltou personalidade\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Perfeita para aquela vibe nostálgica dos anos 80\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Spam: Clique no link para ganhar gift card grátis!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quem mais sentiu que essa música combina com domingo de manhã?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Esse refrão fica grudado na cabeça, socorro!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Tópico off: alguém sabe de boas playlists de indie?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Não gosto dos vocais, prefiro a versão original\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Crítica: a produção parece datada\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Sugestão: adicionem um solo de saxofone\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Dúvida: por que a letra fala sobre o mar?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Excelente remix, traz uma nova cara à música\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Alguém sabe se vai ter turnê mundial?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Spam: Baixe nosso app de streaming e receba 30 dias grátis\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Faltou bateria na mixagem, ficou apagada\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Adoro quando o baixo entra na batida\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Sugestão: tiraria o autotune pesado\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Elogio: melhor lançamento do ano\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Dúvida: qual estúdio gravou essa faixa?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Crítica: letra fraca comparada ao resto do álbum\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Por que só lançaram em vinil exclusiva?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa parte me lembra Pink Floyd, sensacional!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Meu comentário foi o primeiro, haha!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Consulte nosso canal para mais músicas grátis\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Incrível como a música cresce no refrão\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Sugestão: colocaria um solo de teclado antes do bridge\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"This track is absolute fire, can't stop listening!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Vocais incríveis, emoção pura.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Beat envolvente do início ao fim.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Adorei a mistura de gêneros nessa faixa.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"A letra me tocou profundamente.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Produção impecável, parabéns ao artista.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Melodia cativante, no repeat mode.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa música é perfeita para correr na esteira.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Super aconselho ouvir com fones de alta qualidade.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Gratidão ao artista por essa obra-prima.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa batida é repetitiva demais.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Mixagem desequilibrada, voz abafada.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Faixa perde o ritmo no segundo refrão.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Não me convenceu, esperava mais inovação.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Letra fraca e sem profundidade.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Gosto não se discute, mas não curti essa.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Produção soa genérica demais.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Instrumental não combinou com o vocal.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Drop sem impacto, decepcionante.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa música parece filler no álbum.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Seria legal uma versão ao vivo.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Podiam adicionar um solo de piano.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Sugiro um remix com batida eletrônica.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Que tal um clipe animado?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Incluir um interlúdio acústico ficaria ótimo.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Adoraria uma colaboração com outro artista.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Poderiam lançar uma versão estendida.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Uma versão instrumental seria bem-vinda.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Que tal um cover em espanhol?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Seria interessante ver a letra traduzida.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Qual software usaram na produção?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Em qual estúdio gravaram essa música?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quem compôs a letra?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quando sai o próximo single?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Essa faixa faz parte de qual álbum?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Por que a capa do single é assim?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Quantos streamings essa música já tem?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Vai ter turnê para divulgar essa faixa?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Por que lançaram sem aviso prévio?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Onde encontro as cifras dessa música?\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Baixe nosso app para ouvir música offline.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Clique no link e ganhe um cupom Spotify Premium!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Confira meu canal para mais playlists grátis.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Promoção: 50% de desconto em fones de ouvido!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Inscreva-se e participe do sorteio de ingressos!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Visite nosso site para baixar músicas de graça.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Publicidade: seu serviço de streaming preferido.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Ganhe 3 meses grátis com este link!\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Anuncie sua marca aqui: contato por DM.\" },\r\n//     { \"id\": \"{{$guid}}\", \"texto\": \"Desconto imperdível em equipamentos de áudio.\" }\r\n// ]\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{COMENTARIOS}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{COMENTARIOS}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1NDI1MTYxOCwianRpIjoiYTRmZWI2OTUtOGE0ZC00YzA3LWE4ZTMtM2M2MjNjMTRiYmJlIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6ImQ3YzdjZjY2LTMzMzctNDAwOC1hMWM3LTE0ZTdhOTRmMTE2OSIsIm5iZiI6MTc1NDI1MTYxOCwiY3NyZiI6IjMzMzY5N2IwLTA5NDMtNDIyMS1iOTkzLTcwYTM3NWI2YzAzYyIsImV4cCI6MTc1NDI1MTY3OH0.WccUBR0r-3EngxNwk7xZAPPEkdnmmUgow5c9KOlYtjw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{COMENTARIOS}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{COMENTARIOS}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "export",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc1NDI1NDMwOCwianRpIjoiYjE1YmI0YjktMWFjMy00MWQ5LTk0MzItNzVkYTIxYjg4MGYxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6ImQ3YzdjZjY2LTMzMzctNDAwOC1hMWM3LTE0ZTdhOTRmMTE2OSIsIm5iZiI6MTc1NDI1NDMwOCwiY3NyZiI6IjkzYmE0ZWUxLTg3ZmQtNDNjZS05N2M5LWZjNzZhZWQwNGY5ZSIsImV4cCI6MTc1NDI1NDM2OH0.xwNL1IVuuphhd7NMkVfu-0ByxfvIJGuTt9iQJwor8W8",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{COMENTARIOS}}/export",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{COMENTARIOS}}",
+								"export"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Relatório Semanal",
+			"item": [
+				{
+					"name": "relatorio_semanal",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{RELATORIOS}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{RELATORIOS}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Insights",
+			"item": [
+				{
+					"name": "insight",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pergunta\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/{{BASE}}/{{INSIGHTS}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"{{BASE}}",
+								"{{INSIGHTS}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "HOST",
+			"value": "https://localhost",
+			"type": "string"
+		},
+		{
+			"key": "BASE",
+			"value": "api",
+			"type": "string"
+		},
+		{
+			"key": "LOGIN",
+			"value": "auth/login",
+			"type": "string"
+		},
+		{
+			"key": "REGISTER",
+			"value": "auth/register",
+			"type": "string"
+		},
+		{
+			"key": "REFRESH",
+			"value": "auth/refresh",
+			"type": "string"
+		},
+		{
+			"key": "COMENTARIOS",
+			"value": "comentarios",
+			"type": "string"
+		},
+		{
+			"key": "RELATORIOS",
+			"value": "relatorio/semana",
+			"type": "string"
+		},
+		{
+			"key": "INSIGHTS",
+			"value": "insights/perguntar",
+			"type": "string"
+		}
+	]
+}
