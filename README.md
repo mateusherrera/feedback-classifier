@@ -153,6 +153,16 @@ git clone https://github.com/mateusherrera/feedback-classifier.git
 cd feedback-classifier
 ```
 
+### Para preparar o ambiente de Dev
+
+Caso queria subir a venv Python se Docker, você pode rodar:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r flask/requirements.txt
+```
+
 ### Variáveis de ambiente
 
 O primeiro passo é definir as variáveis de ambiente.
@@ -216,6 +226,25 @@ print(secrets.token_urlsafe(32))
 
 > Importante: Usar chaves destintas para SECRET_KEY e JWT_SECRET_KEY
 
+### Gerar certificado
+
+Para subir o NGINX corretamente, na raiz do repositório faça:
+
+```
+cd nginx
+mkdir ssl
+cd ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout private-key.key -out fullchain.pem -subj "/C=BR/ST=SP/L=SaoPaulo/O=Dev/OU=Dev/CN=localhost"
+```
+
+Para verificar o comando `ls` deve retornar algo como:
+
+```sh
+fullchain.pem  private-key.key
+```
+
+Por fim volte para a raiz `cd ../..`
+
 ### Docker Compose
 
 Com o `.env` devidamente criado e preenchido basta fazer o build do Docker, rodando:
@@ -242,6 +271,16 @@ a1ba3bd2e5ad   postgres:16                         "docker-entrypoint.s…"   2 
 9d76af791392   redis:7                             "docker-entrypoint.s…"   2 days ago     Up About an hour   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp   feedback-classifier_redis
 ```
 
+### Aplicando migrate
+
+Para finalizar aplique as migrates no banco de dados com:
+
+```sh
+docker compose exec api flask db upgrade
+```
+
+Feito isso, a API Flask está UP!
+
 ### Jenkins
 
 Caso queira, é possível é subir um Jenkins com o `docker-compose.yml` disponível em `jenkins/docker-compose.yml`. Basta rodar:
@@ -251,11 +290,13 @@ cd jenkins
 docker compose up -d
 ```
 
-Se você optou por subir o jenkins do repositório, faça o seu primeiro acesso com a senha disponível com o comando abaixo, e crie o seu usuário de administrador.
+Se você optou por subir o jenkins do repositório, faça o seu primeiro acesso, em `http://localhost:8080/`, com a senha disponível com o comando abaixo, e crie o seu usuário de administrador.
 
 ```sh
 docker compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
+
+Instale os plugins sugeridos.
 
 Feito isso, ou usando um Jekins proprio. Logado, faça as seguinte configurações para rodar os testes automáticos com Github Actions:
 

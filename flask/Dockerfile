@@ -1,5 +1,5 @@
 # Base Python leve
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Diretório de trabalho
 WORKDIR /flask
