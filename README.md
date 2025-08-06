@@ -140,7 +140,7 @@ Nessa seção será listado o passo-a-passo para executar o projeto utilizando D
 
 ### Requisitos:
 
-* Python 3.10+
+* Python 3.11+
 * Git
 * Linux ou WSL2 (Para instalar WSL2 no Windows, caso seja o caso você [pode seguir esse tutorial](https://medium.com/@habbema/desvendando-o-wsl-2-no-windows-11-c7649545026d))
 * Docker Desktop no Windows integrado com WSL2, caso necessário[utilize o tutorial oficial](https://docs.docker.com/desktop/features/wsl/)
