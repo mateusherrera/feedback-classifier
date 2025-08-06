@@ -302,13 +302,15 @@ Para realizar testes locais rode o comando:
 PYTHONPATH=flask OPENAI_API_KEY=<token-openai> LLM_MODEL=gpt-3.5-turbo pytest -v
 ```
 
-Para realizar testes de EVALs rode o comando abaixo, para cálcular métricas de recall, precision e f1 de todas as categorias classificadas:
+Para realizar testes de EVALs com um único comando rode:
 
 ```sh
 PYTHONPATH=flask dotenv run -- python -m app.evals --all
 ```
 
 ### Flags Disponíveis
+
+Segue lista de flags possíveis para evals:
 
 | Flag                            | Descrição                                                                 |
 |---------------------------------|---------------------------------------------------------------------------|
@@ -331,7 +333,7 @@ Sobre as métricas mínimas definidas no GitHub Actions, o CI não passará caso
 |-------------|---------------|-----------------|-----------------|
 | ELOGIO      | 0.60          | 0.60            | 0.60            |
 | CRÍTICA     | 0.65          | 0.65            | 0.65            |
-| SUGESTÃO    | 0.50          | 0.70            | 0.70            |
+| SUGESTÃO    | 0.50          | 0.60            | 0.70            |
 | DÚVIDA      | 0.65          | 0.65            | 0.65            |
 | SPAM        | 0.80          | 0.80            | 0.80            |
 
@@ -357,7 +359,7 @@ Em `docs/postman-collection/` há o arquivo `Flask - LLM API.postman_collection.
 
 * Auth:
     * POST `api/auth/register`: Endpoint para criar usuários.
-    * POST `api/auth/login`: Endpoint para fazer login, 
+    * POST `api/auth/login`: Endpoint para fazer login. Ao passar credenciais (user e senha) válidas, retorna o refresh e o access token.
     * POST `api/auth/refresh`: Endpoint para regerar um access token (vale por um minuto, em dev um dia), com refresh token (vale por um dia) válido.
 * Classificação de comentários:
     * POST `api/comentarios`: Endpoint para classificar comentário com modelo LLM.
@@ -368,8 +370,69 @@ Em `docs/postman-collection/` há o arquivo `Flask - LLM API.postman_collection.
 * Insights:
     * POST `api/insights/perguntar`: Responde pergunta em linguagem natural com base nos últimos 8 relatórios semanais.
 
+## Classificador de comentário
+
+O classificador de comentários funciona passando um JSON com as tags 'id' (uuid) e 'texto' conteúdo do comentários, ou lista disso (em lote). E o retorno será a classificação disso pelo modelo de LLM da OpenAI 'gpt-35-turbo', quando a sua categoria entre [ELOGIO, CRÍTICA, SUGESTÃO, DÚVIDA, SPAM], tags indicando a(s) funcionalidade(s) que referencia aquele comentário e a confiabilidade da classficação pelo modelo.
+
+* Exemplo de chamada unitária:
+
+![Exemplo de requisição de classificação de comentário via Postman](images/exemplo-classifier-unico.png)
+
+* Exemplo de chamada em lote:
+
+![Exemplo de requisição de classificação de comentários em lote via Postman](images/exemplo-classifier-batch.png)
+
 ## Painel e Relátorios
+
+### Painel
+
+Para exibição dos comentários classificados é necessários fazer o login em ``https://localhost/`` com usuário e senha criado com a api `api/auth/register`. Esse é a parte privada para exibição das classificações.
+
+O portal foi feito com HTML, CSS e JS puro, para agilizar o desenvolvimento, em um cenário real, provavelmente, gastaria mais um tempos para desenvolver algo com React, e garantir maior qualidade par o portal de curadoria. Mas, da forma como está, o login funciona com JWT, e exibe os comentários classificados para o usuário, sendo possível fazer alguns filtros simples.
+
+### Relátorios
+
+Os relátorios são os resultados obtidos pelos cálculos dos dados obtidos da classificação de comentários para criação de gráficos.
+
+Optei po deixar os valores apenas em JSON, mas eles representam os seguintes dados:
+1. Frenquencia de categorias, ou seja, porcentagem de quantos comentários foram classificados para cada categoria.
+2. Evolução da quantidade de comentários classificados em cada categorias nos úlitmos 7 dias.
+3. Tags mais recorrente nas últimas 48 horas.
+4. Média de confiabilidade da classificação, por categoria.
+5. Quantidade de comentários classificados por hora.
 
 ## Resumo por E-mail
 
+O envio do e-mail acontece com a execução semanal de uma task com Clery-beat. O texto é gerado com os comentários classificados na semana através do LLM da OpenAI. Esse texto é enviado por e-mail, para os endereços cadastrados no `.env` ([verificar seção 'Como executar o projeto'](#como-executar-o-projeto)).
+
+Se quiser testar *StandAlone*, pode rodar:
+
+```sh
+docker compose exec api bash -c "\
+python - << 'EOF'\ 
+from app.main import create_app 
+app = create_app() 
+with app.app_context(): 
+    from app.tasks import enviar_resumo_semanal 
+    enviar_resumo_semanal() 
+EOF"
+```
+
+* Exemplo de e-mail gerado:
+
+![E-mail gerado com modelo de LLM enviado automaticamente pela task](<images/exemplo-email.jpg>)
+
 ## Extra: Insights
+
+O endpoint extra foi implementado no caminho `api/insights/perguntar`, passando um JSON como:
+```json
+{
+    "pergunta": "Conteúdo da pergunta em linguagem natual aqui?"
+}
+```
+
+O response será construido pelo LLM da OpenAI, usando como contexto os últimos 8 relatórios semanais enviados, sendo que, no mínimo **3 devem existir**, parao endpoint funcionar.
+
+* Exemplo de insight:
+
+![Exemplo de requisição de insight em resumos semanais via Postman](images/exemplo-insight.png)
