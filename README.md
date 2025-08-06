@@ -1,5 +1,6 @@
 # AluMusic Feedback Classifier
-![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+
+![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)
 ![OpenAI API](https://img.shields.io/badge/OpenAI-API-brightgreen?logo=openai&logoColor=white)
 ![Model GPT‐3.5‐turbo](https://img.shields.io/badge/Model-gpt--3.5--turbo-blueviolet)
 ![License](https://img.shields.io/github/license/mateusherrera/feedback-classifier.svg)
@@ -24,7 +25,7 @@ Todo o ambiente está conteinerizado com Docker e servido por Gunicorn e NGINX, 
 
 | Categoria             | Ferramenta                                                                               |
 |-----------------------|------------------------------------------------------------------------------------------|
-| Linguagem             | [Python 3.10+](https://www.python.org/)                                                  |
+| Linguagem             | [Python 3.11+](https://www.python.org/)                                                  |
 | Web                   | [Flask](https://flask.palletsprojects.com/en/stable/#user-s-guide)                       |
 | API                   | [Flask-RESTful](https://flask-restful.readthedocs.io/en/latest/)                         |
 | Migrations            | [Flask-Migrate / Alembic](https://flask-migrate.readthedocs.io/)                         |
