@@ -189,7 +189,7 @@ Abaixo seguem as descrições da cada variáveis que deve ser fornecida para o p
     * ``SQLALCHEMY_DATABASE_URI``: Conn string para conexão com o banco a ser utilizado pelo Flask. Exemplo: `postgresql://usuario:senha@host:5432/nome_do_banco`. PS.: para utilizar o banco gerado pelo Docker, host será o mesmo nome do container, no caso `db`.
         > Importante: A connstring será usada para conexão. As variáveis abaixo são apenas para criação do banco com o docker compose.
         > Então caso queira conectar a um banco proprio, pode preencher apenas a connstring com as suas configurações, e as debaixo podem ser ignoradas. Para esse último caso, não suba o serviço db, quando fazer o build dos containers.
-    * ``POSTGRES_DB``: Nome do Banco de Dados que será gerado pelo docker ao fazer o build do PostgreSQL.
+    * ``POSTGRES_DB``: Nome do Banco de Dados que será gerado pelo docker ao fazer o build do PostgreSQL. Nesse caso deve ser `feedback_classifier`.
     * ``POSTGRES_HOST``: Host do Banco de Dados que será gerado pelo docker ao fazer o build do PostgreSQL. De acordo com a estrutura do `docker-compose.yml` o valor deve ser o nome do service, no caso `db`.
     * ``POSTGRES_PORT``: Número da porta para conexão com o Banco de Dados.
     * ``POSTGRES_USER``: Usuário admin que será gerado no build do container.
